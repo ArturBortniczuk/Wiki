@@ -143,6 +143,7 @@ export default function Arena() {
                     <FighterCard
                         fighter={fighters[0]}
                         currentHp={battleState.hps[0]}
+                        isBattleStarted={userChoice !== null}
                         isWinner={battleState.winnerIdx === 0}
                         onRevealStat={(cost) => {
                             if (score >= cost) {
@@ -161,19 +162,19 @@ export default function Arena() {
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {!isOngoing && !isDone && (
                             <>
-                                <h3 className="choice-title">Wybierz Zwycięzcę</h3>
+                                <h3 className="choice-title mb-4">Wybierz Zwycięzcę</h3>
                                 <div className="action-buttons">
                                     <button
                                         onClick={() => startBattle(0)}
-                                        className="arrow-obj-btn left"
+                                        className="bet-btn bet-left"
                                     >
-                                        <span className="arrow-icon">←</span>
+                                        <span className="bet-icon">🛡️</span> OBSTAWIAM LEWEGO
                                     </button>
                                     <button
                                         onClick={() => startBattle(1)}
-                                        className="arrow-obj-btn right"
+                                        className="bet-btn bet-right"
                                     >
-                                        <span className="arrow-icon">→</span>
+                                        OBSTAWIAM PRAWEGO <span className="bet-icon">⚔️</span>
                                     </button>
                                 </div>
                             </>
@@ -212,6 +213,7 @@ export default function Arena() {
                     <FighterCard
                         fighter={fighters[1]}
                         currentHp={battleState.hps[1]}
+                        isBattleStarted={userChoice !== null}
                         isWinner={battleState.winnerIdx === 1}
                         onRevealStat={(cost) => {
                             if (score >= cost) {

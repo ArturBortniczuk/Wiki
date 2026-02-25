@@ -65,7 +65,7 @@ export async function fetchFighter(): Promise<Fighter> {
       const statD = await stat.json();
       const page = Object.values(statD.query.pages)[0] as any;
 
-      if (page.length && page.length > 10000) {
+      if (page.length && page.length > 5000 && page.images && page.images.length > 0) {
         const imgReq = await fetch(`https://pl.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { cache: 'no-store' });
         const imgD = await imgReq.json();
 

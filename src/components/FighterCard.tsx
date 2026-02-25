@@ -4,13 +4,14 @@ import { Fighter } from '@/services/wikipediaService';
 interface FighterCardProps {
     fighter: Fighter;
     currentHp: number;
+    isBattleStarted: boolean;
     isWinner?: boolean;
     onRevealStat?: (cost: number) => boolean;
 }
 
 const STATS_REVEAL_COST = 5;
 
-export default function FighterCard({ fighter, currentHp, isWinner = false, onRevealStat }: FighterCardProps) {
+export default function FighterCard({ fighter, currentHp, isBattleStarted, isWinner = false, onRevealStat }: FighterCardProps) {
     const hpPercent = Math.max(0, Math.min(100, (currentHp / fighter.maxHp) * 100));
     const [revealedStats, setRevealedStats] = useState<Set<string>>(new Set());
 
@@ -30,13 +31,14 @@ export default function FighterCard({ fighter, currentHp, isWinner = false, onRe
         }
     };
 
-    const renderStatRow = (label: string, value: string | number, key: keyof typeof fighter.tooltips, colorClass?: string) => {
-        const isRevealed = revealedStats.has(key) || isWinner; // Always reveal for winner or at the end
+    const renderStatRow = (label: string, value: string | number, key: keyof typeof fighter.tooltips | "hp" | "raw", colorClass?: string) => {
+        const isRevealed = revealedStats.has(key as string) || isWinner || isBattleStarted;
+        const tooltipStr = (fighter.tooltips as any)?.[key];
         const content = isRevealed ? (
             <span className={`stat-val ${colorClass || ''}`}>{value}</span>
         ) : (
             <button
-                onClick={() => handleReveal(key)}
+                onClick={() => handleReveal(key as string)}
                 className="stat-reveal-btn"
                 title="Odkryj statystykę (Koszt: 5 punktów)"
             >
@@ -45,7 +47,7 @@ export default function FighterCard({ fighter, currentHp, isWinner = false, onRe
         );
 
         return (
-            <div className="stat-row" title={fighter.tooltips?.[key]}>
+            <div className="stat-row" title={tooltipStr}>
                 <span className="stat-label">{label}</span>
                 {content}
             </div>
@@ -88,12 +90,19 @@ export default function FighterCard({ fighter, currentHp, isWinner = false, onRe
                 {/* HP Bar */}
                 <div className="fighter-hp-container" title={fighter.tooltips?.hp}>
                     <div className="fighter-hp-text">
-                        {Math.floor(currentHp)} / {fighter.maxHp} HP
+                        {isBattleStarted || isWinner || revealedStats.has("hp") ? (
+                            `${Math.floor(currentHp)} / ${fighter.maxHp} HP`
+                        ) : (
+                            <button onClick={() => handleReveal("hp")} className="stat-reveal-btn text-lg" title="Odkryj HP (5 pkt)">??? / ??? HP 🔒</button>
+                        )}
                     </div>
                     <div className="hp-bar-bg">
                         <div
                             className="hp-bar-fill"
-                            style={{ width: `${hpPercent}%` }}
+                            style={{
+                                width: (isBattleStarted || isWinner || revealedStats.has("hp")) ? `${hpPercent}%` : '100%',
+                                filter: (isBattleStarted || isWinner || revealedStats.has("hp")) ? 'none' : 'grayscale(1) brightness(0.3)'
+                            }}
                         />
                     </div>
                 </div>
@@ -105,9 +114,7 @@ export default function FighterCard({ fighter, currentHp, isWinner = false, onRe
                     {renderStatRow("SPD", fighter.spd.toFixed(1), "spd")}
                     {renderStatRow("CRIT", `${fighter.crit}%`, "crit", "text-red")}
                     {renderStatRow("UNIK", `${fighter.eva}%`, "eva", "text-cyan")}
-                    <div className="stat-row">
-                        <span className="stat-label">ROZMIAR</span> <span className="stat-val">{fighter.raw}</span>
-                    </div>
+                    {renderStatRow("ROZMIAR", fighter.raw, "raw")}
                 </div>
             </div>
 
