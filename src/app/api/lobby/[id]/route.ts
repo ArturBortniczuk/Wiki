@@ -51,7 +51,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         // Host clicks Start
         if (updates.action === 'start_game') {
-            state.status = 'starting'; // waiting for fighters to be generated
+            if (updates.pool && updates.pool.length > 0) {
+                state.fighterPool = updates.pool;
+                const nextMatch = state.fighterPool.shift();
+                state.fighters = nextMatch;
+                state.status = 'round_active';
+                if (state.settings.timer > 0) {
+                    state.roundEndTime = Date.now() + (state.settings.timer * 1000);
+                }
+            } else {
+                state.status = 'starting'; // waiting for fighters to be generated as fallback
+            }
         }
 
         // E.g. handling bets or ready
@@ -81,10 +91,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         if (updates.action === 'next_round') {
             state.currentRound += 1;
-            state.fighters = null;
-            state.status = 'starting';
+
+            if (state.fighterPool && state.fighterPool.length > 0) {
+                const nextMatch = state.fighterPool.shift();
+                state.fighters = nextMatch;
+                state.status = 'round_active';
+                if (state.settings.timer > 0) {
+                    state.roundEndTime = Date.now() + (state.settings.timer * 1000);
+                }
+            } else {
+                state.fighters = null;
+                state.status = 'starting';
+                state.roundEndTime = null;
+            }
+
             state.players.forEach((p: any) => p.bet = null);
-            state.roundEndTime = null;
         }
 
         if (updates.action === 'spend_points') {

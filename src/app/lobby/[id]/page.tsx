@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import MultiplayerArena from '@/components/MultiplayerArena';
+import { fetchFighter } from '@/services/wikipediaService';
 
 export default function LobbyPage() {
     const router = useRouter();
@@ -25,6 +26,10 @@ export default function LobbyPage() {
     // Game starting state 
     const [gameStarted, setGameStarted] = useState(false);
     const [lobbyState, setLobbyState] = useState<any>(null);
+
+    // Pre-loading state
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [genProgress, setGenProgress] = useState(0);
 
     // Poll the redis lobby state
     useEffect(() => {
@@ -76,14 +81,28 @@ export default function LobbyPage() {
     };
 
     const handleStartGame = async () => {
+        if (isGenerating) return;
         try {
+            setIsGenerating(true);
+            const totalRoundsToGenerate = Math.max(3, (lobbyState?.settings?.rounds || 3) * 2);
+            const pool = [];
+
+            for (let i = 0; i < totalRoundsToGenerate; i++) {
+                setGenProgress(Math.round(((i) / totalRoundsToGenerate) * 100));
+                // Fetch pairs in parallel
+                const [f1, f2] = await Promise.all([fetchFighter(), fetchFighter()]);
+                pool.push([f1, f2]);
+            }
+            setGenProgress(100);
+
             await fetch(`/api/lobby/${lobbyId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'start_game' })
+                body: JSON.stringify({ action: 'start_game', pool })
             });
         } catch (e) {
             console.error("Wystąpił błąd podczas startu", e);
+            setIsGenerating(false);
         }
     };
 
@@ -168,8 +187,8 @@ export default function LobbyPage() {
                     </div>
 
                     {isHost ? (
-                        <button disabled={lobbyState?.players?.length < 2} onClick={handleStartGame} className={lobbyState?.players?.length >= 2 ? "premium-btn text-gold" : "premium-btn"} style={{ width: '100%' }}>
-                            {lobbyState?.players?.length >= 2 ? "Rozpocznij Starcie! ⚔️" : "Czekam na graczy..."}
+                        <button disabled={lobbyState?.players?.length < 2 || isGenerating} onClick={handleStartGame} className={lobbyState?.players?.length >= 2 ? "premium-btn text-gold" : "premium-btn"} style={{ width: '100%' }}>
+                            {lobbyState?.players?.length >= 2 ? (isGenerating ? `Pobieranie aren z Wikipedii... ${genProgress}%` : "Rozpocznij Starcie! ⚔️") : "Czekam na graczy..."}
                         </button>
                     ) : (
                         <button disabled className="premium-btn text-gold" style={{ width: '100%' }}>

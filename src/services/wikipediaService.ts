@@ -64,7 +64,7 @@ export async function fetchFighter(): Promise<Fighter> {
       const rndD = await rnd.json();
       const title = rndD.query.random[0].title;
 
-      const stat = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions|links|langlinks&inprop=protection&pllimit=max&lllimit=max&titles=${encodeURIComponent(title)}&format=json&origin=*`, { cache: 'no-store' });
+      const stat = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions|links|langlinks|extlinks|categories&inprop=protection&pllimit=max&lllimit=max&ellimit=max&cllimit=max&titles=${encodeURIComponent(title)}&format=json&origin=*`, { cache: 'no-store' });
       const statD = await stat.json();
       const page = Object.values(statD.query.pages)[0] as any;
 
@@ -83,12 +83,14 @@ export async function fetchFighter(): Promise<Fighter> {
         const revs = page.revisions ? page.revisions.length : 1;
         const links = page.links ? page.links.length : 0;
         const langs = page.langlinks ? page.langlinks.length : 0;
+        const extLinksCount = page.extlinks ? page.extlinks.length : 0;
+        const catCount = page.categories ? page.categories.length : 0;
         const isProtected = page.protection && page.protection.length > 0;
 
-        const baseArm = 10 + Math.min(50, revs * 2) + (isProtected ? 10 : 0);
+        const baseArm = 5 + Math.min(40, (extLinksCount * 0.5));
         const baseSpd = 1.0 + (langs * 0.05);
         const baseCrit = Math.min(60, links * 0.2);
-        const baseEva = Math.max(5, 30 - page.length / 3000);
+        const baseEva = 50 * Math.pow(0.95, catCount);
 
         let f: any = {
           id: Math.random().toString(36).substring(7),
@@ -110,10 +112,10 @@ export async function fetchFighter(): Promise<Fighter> {
           tooltips: {
             hp: `Długość tekstu (${page.length} znaków) / 5`,
             atk: `Baza 40 + (Liczba obrazów: ${page.images ? page.images.length : 0} * 15)`,
-            arm: `Baza 10% + 2% za edycję (${revs})${isProtected ? ' + 10% (Zabezpieczony)' : ''}`,
+            arm: `Baza 5% + 0.5% za każdy link zewnętrzny (${extLinksCount} - Max 40%)`,
             spd: `Baza 1.0 + 5% za każdy przetłumaczony język obiektu (${langs})`,
             crit: `0.2% za każdy link wewnętrzny na stronie wpisu (${links} - Max 60%)`,
-            eva: `Zwinność spada wraz z długością artykułu (Start 30%)`
+            eva: `Zwinność bazowa 50%, każda kategoria zmniejsza obecną wartość o 5% (Kategorii: ${catCount})`
           }
         };
 
