@@ -138,7 +138,7 @@ export async function fetchFighter(): Promise<Fighter> {
         f.arm = Math.max(0, Math.min(85, Math.floor(f.arm)));
         f.atk = Math.max(1, Math.floor(f.atk));
         f.spd = Math.max(0.1, f.spd);
-        f.crit = Math.max(0, Math.min(75, f.crit));
+        f.crit = Math.round(Math.max(0, Math.min(75, f.crit)) * 100) / 100;
         f.eva = Math.max(0, Math.round(Math.min(60, f.eva)));
         res = f as Fighter;
       }
