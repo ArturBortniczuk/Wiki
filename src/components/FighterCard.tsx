@@ -31,9 +31,19 @@ export default function FighterCard({ fighter, currentHp, isBattleStarted, isWin
         }
     };
 
+    const genericTooltips: Record<string, string> = {
+        hp: "Zależne od całkowitej wielkości tekstu artykułu",
+        atk: "Zależne od ilości wstawionych obrazów w artykule",
+        arm: "Zależne od ilości ostatnich edycji oraz zabezpieczeń artykułu",
+        spd: "Zależne od ilości dostępnych tłumaczeń tego artykułu na inne języki",
+        crit: "Zależne od ilości linków wewnętrznych w artykule",
+        eva: "Zależne odwrotnie proporcjonalnie od długości artykułu",
+        raw: "Czysty rozmiar pobranego artykułu w bajtach"
+    };
+
     const renderStatRow = (label: string, value: string | number, key: keyof typeof fighter.tooltips | "hp" | "raw", colorClass?: string) => {
         const isRevealed = revealedStats.has(key as string) || isWinner || isBattleStarted;
-        const tooltipStr = (fighter.tooltips as any)?.[key];
+        const tooltipStr = isRevealed ? (fighter.tooltips as any)?.[key] : genericTooltips[key as string] || "Wykup, aby poznać szczegóły";
         const content = isRevealed ? (
             <span className={`stat-val ${colorClass || ''}`}>{value}</span>
         ) : (
