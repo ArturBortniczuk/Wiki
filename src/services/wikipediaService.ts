@@ -87,7 +87,7 @@ export async function fetchFighter(): Promise<Fighter> {
 
         const baseArm = 10 + Math.min(50, revs * 2) + (isProtected ? 10 : 0);
         const baseSpd = 1.0 + (langs * 0.05);
-        const baseCrit = Math.min(60, links);
+        const baseCrit = Math.min(60, links * 0.2);
         const baseEva = Math.max(5, 30 - page.length / 3000);
 
         let f: any = {
@@ -112,7 +112,7 @@ export async function fetchFighter(): Promise<Fighter> {
             atk: `Baza 40 + (Liczba obrazów: ${page.images ? page.images.length : 0} * 15)`,
             arm: `Baza 10% + 2% za edycję (${revs})${isProtected ? ' + 10% (Zabezpieczony)' : ''}`,
             spd: `Baza 1.0 + 5% za każdy przetłumaczony język obiektu (${langs})`,
-            crit: `Jeden procent za każdy link wewnętrzny na stronie wpisu (${links} - Max 60%)`,
+            crit: `0.2% za każdy link wewnętrzny na stronie wpisu (${links} - Max 60%)`,
             eva: `Zwinność spada wraz z długością artykułu (Start 30%)`
           }
         };
