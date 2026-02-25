@@ -27,6 +27,9 @@ export interface Fighter {
   raw: number;
   imgCount: number;
   revCount: number;
+  linkCount: number;
+  langCount: number;
+  isProtected: boolean;
   tooltips: Record<string, string>;
 }
 
@@ -61,7 +64,7 @@ export async function fetchFighter(): Promise<Fighter> {
       const rndD = await rnd.json();
       const title = rndD.query.random[0].title;
 
-      const stat = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions&titles=${encodeURIComponent(title)}&format=json&origin=*`, { cache: 'no-store' });
+      const stat = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions|links|langlinks&inprop=protection&pllimit=max&lllimit=max&titles=${encodeURIComponent(title)}&format=json&origin=*`, { cache: 'no-store' });
       const statD = await stat.json();
       const page = Object.values(statD.query.pages)[0] as any;
 
@@ -78,9 +81,13 @@ export async function fetchFighter(): Promise<Fighter> {
         const baseHp = page.length / 5;
         const baseAtk = Math.max(40, (page.images ? page.images.length * 15 : 40));
         const revs = page.revisions ? page.revisions.length : 1;
-        const baseArm = 10 + Math.min(50, revs * 2);
-        const baseSpd = 1.0;
-        const baseCrit = 5 + Math.min(30, (page.length % 100) / 2);
+        const links = page.links ? page.links.length : 0;
+        const langs = page.langlinks ? page.langlinks.length : 0;
+        const isProtected = page.protection && page.protection.length > 0;
+
+        const baseArm = 10 + Math.min(50, revs * 2) + (isProtected ? 10 : 0);
+        const baseSpd = 1.0 + (langs * 0.05);
+        const baseCrit = Math.min(60, links);
         const baseEva = Math.max(5, 30 - page.length / 3000);
 
         let f: any = {
@@ -97,12 +104,15 @@ export async function fetchFighter(): Promise<Fighter> {
           raw: page.length,
           imgCount: page.images ? page.images.length : 0,
           revCount: revs,
+          linkCount: links,
+          langCount: langs,
+          isProtected: isProtected,
           tooltips: {
             hp: `Długość tekstu (${page.length} znaków) / 5`,
             atk: `Baza 40 + (Liczba obrazów: ${page.images ? page.images.length : 0} * 15)`,
-            arm: `Baza 10% + 2% za każdą ostatnią edycję (${revs})`,
-            spd: `Szybkość bazowa 1.0`,
-            crit: `Baza 5% + entropia z końcówki rozmiaru pliku`,
+            arm: `Baza 10% + 2% za edycję (${revs})${isProtected ? ' + 10% (Zabezpieczony)' : ''}`,
+            spd: `Baza 1.0 + 5% za każdy przetłumaczony język obiektu (${langs})`,
+            crit: `Jeden procent za każdy link wewnętrzny na stronie wpisu (${links} - Max 60%)`,
             eva: `Zwinność spada wraz z długością artykułu (Start 30%)`
           }
         };
@@ -123,12 +133,13 @@ export async function fetchFighter(): Promise<Fighter> {
           }
         });
 
-        f.maxHp = Math.floor(f.hp);
-        f.hp = Math.floor(f.hp);
-        f.arm = Math.min(85, Math.floor(f.arm));
-        f.atk = Math.floor(f.atk);
-        f.crit = Math.min(75, f.crit);
-        f.eva = Math.round(Math.min(60, f.eva));
+        f.maxHp = Math.max(1, Math.floor(f.hp));
+        f.hp = f.maxHp;
+        f.arm = Math.max(0, Math.min(85, Math.floor(f.arm)));
+        f.atk = Math.max(1, Math.floor(f.atk));
+        f.spd = Math.max(0.1, f.spd);
+        f.crit = Math.max(0, Math.min(75, f.crit));
+        f.eva = Math.max(0, Math.round(Math.min(60, f.eva)));
         res = f as Fighter;
       }
     } catch (e) {
