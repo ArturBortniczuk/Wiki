@@ -88,7 +88,7 @@ export default function FighterCard({ fighter, currentHp, isBattleStarted, isWin
                 </div>
 
                 {/* HP Bar */}
-                <div className="fighter-hp-container" title={fighter.tooltips?.hp}>
+                <div className="fighter-hp-container" title={(isBattleStarted || isWinner || revealedStats.has("hp")) ? fighter.tooltips?.hp : "PUNKTY ZDROWIA (Odkryj)"}>
                     <div className="fighter-hp-text">
                         {isBattleStarted || isWinner || revealedStats.has("hp") ? (
                             `${Math.floor(currentHp)} / ${fighter.maxHp} HP`

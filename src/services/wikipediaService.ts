@@ -69,6 +69,10 @@ export async function fetchFighter(): Promise<Fighter> {
         const imgReq = await fetch(`https://pl.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { cache: 'no-store' });
         const imgD = await imgReq.json();
 
+        if (!imgD.thumbnail || !imgD.thumbnail.source) {
+          continue;
+        }
+
         const text = (imgD.extract || "").toLowerCase();
 
         const baseHp = page.length / 5;
@@ -124,7 +128,7 @@ export async function fetchFighter(): Promise<Fighter> {
         f.arm = Math.min(85, Math.floor(f.arm));
         f.atk = Math.floor(f.atk);
         f.crit = Math.min(75, f.crit);
-        f.eva = Math.min(60, f.eva);
+        f.eva = Math.round(Math.min(60, f.eva));
         res = f as Fighter;
       }
     } catch (e) {
