@@ -14,6 +14,7 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
     // UI state
     const [userChoice, setUserChoice] = useState<number | null>(null);
     const [loadingMsg, setLoadingMsg] = useState("OCZEKIWANIE NA GLADIATORÓW...");
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
     const myPlayer = lobbyState?.players?.find((p: any) => p.nick === nickname) || {};
     const myPoints = myPlayer.points || 0;
@@ -57,6 +58,19 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
         const interval = setInterval(fetchState, 1500);
         return () => clearInterval(interval);
     }, [lobbyId, fighters]);
+
+    // Timer countdown
+    useEffect(() => {
+        if (lobbyState?.roundEndTime && lobbyState?.status === 'round_active') {
+            const interval = setInterval(() => {
+                const remaining = Math.max(0, Math.ceil((lobbyState.roundEndTime - Date.now()) / 1000));
+                setTimeLeft(remaining);
+            }, 500);
+            return () => clearInterval(interval);
+        } else {
+            setTimeLeft(null);
+        }
+    }, [lobbyState?.roundEndTime, lobbyState?.status]);
 
     // Host generates fighters if starting
     useEffect(() => {
@@ -246,7 +260,12 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {!isOngoing && !isDone && (
                             <>
-                                <h3 className="choice-title mb-4">Wybierz Zwycięzcę</h3>
+                                <h3 className="choice-title mb-2">Wybierz Zwycięzcę</h3>
+                                {timeLeft !== null && (
+                                    <div className="text-red font-bold mb-3" style={{ fontSize: '1.2rem', textShadow: '0 0 5px red' }}>
+                                        Czas: {timeLeft}s
+                                    </div>
+                                )}
                                 <div className="action-buttons">
                                     <button
                                         onClick={() => placeBet(0)}
@@ -274,8 +293,16 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '10px' }}>
                                 {lobbyState?.players?.map((p: any) => (
                                     <div key={p.nick} className="text-sm" style={{ padding: '5px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>
-                                        <span className="font-bold">{p.nick}</span>: <br />
-                                        {p.bet === 0 ? <span className="text-red">Lewy (🛡️)</span> : p.bet === 1 ? <span className="text-blue">Prawy (⚔️)</span> : <span className="text-muted">Myśli...</span>}
+                                        <span className="font-bold">{p.nick}</span> (🏆{p.score || 0} 🪙{p.points || 0}): <br />
+                                        {p.bet !== null ? (
+                                            lobbyState.status === 'round_active' ? (
+                                                <span className="text-gold">Gotowy ✔️</span>
+                                            ) : (
+                                                p.bet === 0 ? <span className="text-red">Lewy (🛡️)</span> : <span className="text-blue">Prawy (⚔️)</span>
+                                            )
+                                        ) : (
+                                            <span className="text-muted">Myśli...</span>
+                                        )}
                                     </div>
                                 ))}
                             </div>
