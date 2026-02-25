@@ -7,11 +7,12 @@ interface FighterCardProps {
     isBattleStarted: boolean;
     isWinner?: boolean;
     onRevealStat?: (cost: number) => boolean;
+    shopEnabled?: boolean;
 }
 
 const STATS_REVEAL_COST = 5;
 
-export default function FighterCard({ fighter, currentHp, isBattleStarted, isWinner = false, onRevealStat }: FighterCardProps) {
+export default function FighterCard({ fighter, currentHp, isBattleStarted, isWinner = false, onRevealStat, shopEnabled = true }: FighterCardProps) {
     const hpPercent = Math.max(0, Math.min(100, (currentHp / fighter.maxHp) * 100));
     const [revealedStats, setRevealedStats] = useState<Set<string>>(new Set());
 
@@ -20,6 +21,7 @@ export default function FighterCard({ fighter, currentHp, isBattleStarted, isWin
     }, [fighter.id]);
 
     const handleReveal = (statKey: string) => {
+        if (!shopEnabled) return;
         if (revealedStats.has(statKey)) return;
         if (onRevealStat && onRevealStat(STATS_REVEAL_COST)) {
             setRevealedStats(prev => new Set(prev).add(statKey));
@@ -50,7 +52,8 @@ export default function FighterCard({ fighter, currentHp, isBattleStarted, isWin
             <button
                 onClick={() => handleReveal(key as string)}
                 className="stat-reveal-btn"
-                title="Odkryj statystykę (Koszt: 5 punktów)"
+                title={shopEnabled ? "Odkryj statystykę (Koszt: 5 punktów)" : "Statystyki zablokowane do startu walki"}
+                style={{ cursor: shopEnabled ? 'pointer' : 'not-allowed', opacity: shopEnabled ? 1 : 0.6 }}
             >
                 ??? 🔒
             </button>
@@ -103,7 +106,14 @@ export default function FighterCard({ fighter, currentHp, isBattleStarted, isWin
                         {isBattleStarted || isWinner || revealedStats.has("hp") ? (
                             `${Math.floor(currentHp)} / ${fighter.maxHp} HP`
                         ) : (
-                            <button onClick={() => handleReveal("hp")} className="stat-reveal-btn text-lg" title="Odkryj HP (5 pkt)">??? / ??? HP 🔒</button>
+                            <button
+                                onClick={() => handleReveal("hp")}
+                                className="stat-reveal-btn text-lg"
+                                title={shopEnabled ? "Odkryj HP (5 pkt)" : "Zablokowane"}
+                                style={{ cursor: shopEnabled ? 'pointer' : 'not-allowed', opacity: shopEnabled ? 1 : 0.6 }}
+                            >
+                                ??? / ??? HP 🔒
+                            </button>
                         )}
                     </div>
                     <div className="hp-bar-bg">

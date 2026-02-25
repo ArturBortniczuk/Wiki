@@ -99,13 +99,15 @@ export default function Home() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <label className="text-muted font-bold text-sm">Ilość Przegranych do Końca Gry (Best of...)</label>
-            <select value={rounds} onChange={e => setRounds(e.target.value)} className="premium-input">
-              <option value="1">Pierwsza Krew (Do 1)</option>
-              <option value="2">Klasyk (Do 2)</option>
-              <option value="3">Turniej (Do 3) - Opcja Domyślna</option>
-              <option value="5">Maraton (Do 5)</option>
-            </select>
+            <label className="text-muted font-bold text-sm">Zwycięstw do Końca Gry</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={rounds}
+              onChange={e => setRounds(e.target.value)}
+              className="premium-input"
+            />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -127,7 +129,7 @@ export default function Home() {
               style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
             />
             <label htmlFor="opt-shop" style={{ cursor: 'pointer', fontSize: '0.9rem' }}>
-              Ukrywaj statystyki pod kłódką (Odkrywanie za Punkty)
+              Sklep z informacjami (Kupowanie podglądu statystyk za punkty; odznaczenie zakrywa je na stałe aż do startu walki)
             </label>
           </div>
 

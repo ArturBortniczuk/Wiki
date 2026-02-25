@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import Arena from '@/components/Arena';
+import MultiplayerArena from '@/components/MultiplayerArena';
 
 export default function LobbyPage() {
     const router = useRouter();
@@ -37,8 +37,8 @@ export default function LobbyPage() {
                     const data = await res.json();
                     setLobbyState(data);
 
-                    if (data.status === 'round_active' || data.status === 'finished') {
-                        // setGameStarted(true);
+                    if (data.status === 'starting' || data.status === 'round_active') {
+                        setGameStarted(true);
                     }
                 }
             } catch (e) {
@@ -61,7 +61,7 @@ export default function LobbyPage() {
             const res = await fetch(`/api/lobby/${lobbyId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'join', player2Nick: nickname })
+                body: JSON.stringify({ action: 'join', playerNick: nickname })
             });
 
             if (res.ok) {
@@ -75,12 +75,22 @@ export default function LobbyPage() {
         }
     };
 
+    const handleStartGame = async () => {
+        try {
+            await fetch(`/api/lobby/${lobbyId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'start_game' })
+            });
+        } catch (e) {
+            console.error("Wystąpił błąd podczas startu", e);
+        }
+    };
+
     if (gameStarted) {
-        // Here we'd render the Multiplayer Version of Arena passing the network state
         return (
-            <main className="main-layout">
-                {/* Normally we will substitute Arena with MultiplayerArena eventually */}
-                <Arena />
+            <main className="main-layout" style={{ maxWidth: '100%', padding: '0' }}>
+                <MultiplayerArena lobbyId={lobbyId} nickname={nickname} isHost={isHost} />
             </main>
         );
     }
@@ -133,16 +143,19 @@ export default function LobbyPage() {
                         )}
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '12px' }}>
-                        <div style={{ textAlign: 'center', flex: 1 }}>
-                            <div className="text-gold font-bold text-xl">{lobbyState?.host?.nick || (isHost ? nickname : "Gospodarz")}</div>
-                            <div className="text-muted text-sm uppercase mt-1">Player 1 (Host)</div>
-                        </div>
-                        <div style={{ fontSize: '2rem', color: 'var(--red)', fontWeight: 'bold' }}>VS</div>
-                        <div style={{ textAlign: 'center', flex: 1 }}>
-                            <div className="text-cyan font-bold text-xl">{lobbyState?.p2?.nick || (!isHost && hasJoined ? nickname : "Oczekiwanie...")}</div>
-                            <div className="text-muted text-sm uppercase mt-1">Player 2</div>
-                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(0,0,0,0.3)', padding: '20px', borderRadius: '12px', maxHeight: '300px', overflowY: 'auto' }}>
+                        <h3 className="text-gold font-bold text-center mb-2" style={{ letterSpacing: '2px', textTransform: 'uppercase' }}>Gracze ({lobbyState?.players?.length || 1})</h3>
+                        {lobbyState?.players ? lobbyState.players.map((p: any, i: number) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: p.isHost ? '3px solid var(--gold)' : '3px solid var(--cyan)' }}>
+                                <span className={p.isHost ? "text-gold font-bold" : "text-cyan font-bold"}>{p.nick} {p.isHost && "(Host)"}</span>
+                                <span className={p.isHost ? "text-gold" : "text-muted"} style={{ fontSize: '0.9rem' }}>{p.ready ? 'Gotowy' : 'Oczekujący'}</span>
+                            </div>
+                        )) : (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: '3px solid var(--gold)' }}>
+                                <span className="text-gold font-bold">{nickname} (Host)</span>
+                                <span className="text-muted" style={{ fontSize: '0.9rem' }}>Oczekujący...</span>
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '0.9rem' }}>
@@ -155,12 +168,12 @@ export default function LobbyPage() {
                     </div>
 
                     {isHost ? (
-                        <button disabled={!lobbyState?.p2} onClick={() => alert("Tutaj zaimplementujemy start bitwy!")} className={lobbyState?.p2 ? "premium-btn text-gold" : "premium-btn"} style={{ width: '100%' }}>
-                            {lobbyState?.p2 ? "Rozpocznij Starcie! ⚔️" : "Czekam na drugiego gracza..."}
+                        <button disabled={lobbyState?.players?.length < 2} onClick={handleStartGame} className={lobbyState?.players?.length >= 2 ? "premium-btn text-gold" : "premium-btn"} style={{ width: '100%' }}>
+                            {lobbyState?.players?.length >= 2 ? "Rozpocznij Starcie! ⚔️" : "Czekam na graczy..."}
                         </button>
                     ) : (
                         <button disabled className="premium-btn text-gold" style={{ width: '100%' }}>
-                            {lobbyState?.status === 'starting' ? "Oczekiwanie na start Hosta..." : "Czekam na status..."}
+                            {lobbyState?.status === 'starting' ? "Oczekiwanie na start Hosta..." : "Czekam na akcję Hosta..."}
                         </button>
                     )}
                 </div>

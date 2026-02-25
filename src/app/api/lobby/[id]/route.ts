@@ -33,39 +33,44 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const state = JSON.parse(data);
 
-        // Handling Player 2 Joining
+        // Handling Player Joining
         if (updates.action === 'join') {
-            if (state.p2) {
-                return NextResponse.json({ error: 'Lobby is full' }, { status: 403 });
+            const exists = state.players.find((p: any) => p.nick === updates.playerNick);
+            if (!exists) {
+                state.players.push({
+                    nick: updates.playerNick,
+                    isHost: false,
+                    ready: false,
+                    bet: null,
+                    score: 0
+                });
             }
-            state.p2 = {
-                nick: updates.player2Nick,
-                ready: false,
-                bet: null,
-                score: 0
-            };
-            state.status = 'starting'; // Found opponent, waiting for first round fighters
+        }
+
+        // Host clicks Start
+        if (updates.action === 'start_game') {
+            state.status = 'starting'; // waiting for fighters to be generated
         }
 
         // E.g. handling bets or ready
         if (updates.action === 'bet') {
-            const player = updates.isHost ? state.host : state.p2;
+            const player = state.players.find((p: any) => p.nick === updates.playerNick);
             if (player) {
                 player.bet = updates.betIndex; // 0 for left, 1 for right
             }
 
-            // If both players bet, we can move the state to fighting/resolving
-            if (state.host.bet !== null && state.p2 && state.p2.bet !== null) {
+            // If all players bet, we can move the state to fighting/resolving
+            const allBet = state.players.every((p: any) => p.bet !== null);
+            if (allBet && state.players.length > 0) {
                 state.status = 'round_finished';
             }
         }
 
-        // Host pushes the new generated fighters down to the lobby state so P2 can see them
+        // Host pushes the new generated fighters down to the lobby state so everyone can see them
         if (updates.action === 'set_fighters') {
             state.fighters = updates.fighters;
             state.status = 'round_active';
-            state.host.bet = null;
-            if (state.p2) state.p2.bet = null;
+            state.players.forEach((p: any) => p.bet = null);
 
             if (state.settings.timer > 0) {
                 state.roundEndTime = Date.now() + (state.settings.timer * 1000);
@@ -76,17 +81,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             state.currentRound += 1;
             state.fighters = null;
             state.status = 'starting';
-            state.host.bet = null;
-            if (state.p2) state.p2.bet = null;
+            state.players.forEach((p: any) => p.bet = null);
             state.roundEndTime = null;
         }
 
-        if (updates.action === 'update_score') {
-            state.host.score = updates.hostScore;
-            state.p2.score = updates.p2Score;
+        if (updates.action === 'update_scores') {
+            state.players.forEach((p: any) => {
+                if (updates.scores[p.nick] !== undefined) {
+                    p.score = updates.scores[p.nick];
+                }
+            });
 
             // Check if someone won
-            if (state.host.score >= state.settings.rounds || state.p2.score >= state.settings.rounds) {
+            const winner = state.players.find((p: any) => p.score >= state.settings.rounds);
+            if (winner) {
                 state.status = 'finished';
             }
         }

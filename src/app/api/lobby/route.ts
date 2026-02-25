@@ -13,19 +13,21 @@ export async function POST(req: Request) {
         // Initial state of the new lobby
         const state = {
             id: lobbyId,
-            status: 'waiting', // waiting for p2
+            status: 'waiting', // waiting for players
             settings: {
                 rounds: parseInt(settings.rounds || '3', 10),
                 timer: parseInt(settings.timer || '30', 10),
                 shop: !!settings.shopEnabled
             },
-            host: {
-                nick: hostNick,
-                ready: false,
-                bet: null,
-                score: 0
-            },
-            p2: null,
+            players: [
+                {
+                    nick: hostNick,
+                    isHost: true,
+                    ready: false,
+                    bet: null,
+                    score: 0
+                }
+            ],
             fighters: null,
             currentRound: 1,
             roundEndTime: null
