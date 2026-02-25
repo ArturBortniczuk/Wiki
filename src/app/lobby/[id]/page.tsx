@@ -44,6 +44,10 @@ export default function LobbyPage() {
 
                     if (data.status === 'starting' || data.status === 'round_active') {
                         setGameStarted(true);
+                    } else if (data.status === 'waiting' && gameStarted) {
+                        setGameStarted(false);
+                        setIsGenerating(false);
+                        setGenProgress(0);
                     }
                 }
             } catch (e) {

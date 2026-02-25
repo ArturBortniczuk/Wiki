@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { redis } from '@/lib/redis';
+import { simulateBattle } from '@/services/battleEngine';
 
 // GET the current state of a lobby
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -73,8 +74,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
             // If all players bet, we can move the state to fighting/resolving
             const allBet = state.players.every((p: any) => p.bet !== null);
-            if (allBet && state.players.length > 0) {
+            if (allBet && state.players.length > 0 && state.status !== 'round_finished') {
                 state.status = 'round_finished';
+                state.battleResult = simulateBattle(state.fighters);
             }
         }
 
@@ -133,6 +135,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             if (winner) {
                 state.status = 'finished';
             }
+        }
+
+        if (updates.action === 'reset_lobby') {
+            state.status = 'waiting';
+            state.fighters = null;
+            state.fighterPool = [];
+            state.currentRound = 1;
+            state.roundEndTime = null;
+            state.battleResult = null;
+            state.players.forEach((p: any) => {
+                p.ready = false;
+                p.bet = null;
+                p.score = 0;
+                p.points = 0;
+                p.streak = 0;
+            });
         }
 
         // Save changes

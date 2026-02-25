@@ -65,12 +65,19 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
             const interval = setInterval(() => {
                 const remaining = Math.max(0, Math.ceil((lobbyState.roundEndTime - Date.now()) / 1000));
                 setTimeLeft(remaining);
+
+                if (remaining <= 0 && userChoice === null) {
+                    const myBet = lobbyState?.players?.find((p: any) => p.nick === nickname)?.bet;
+                    if (myBet === null || myBet === undefined) {
+                        placeBet(-1); // Automatically submit a timeout loss
+                    }
+                }
             }, 500);
             return () => clearInterval(interval);
         } else {
             setTimeLeft(null);
         }
-    }, [lobbyState?.roundEndTime, lobbyState?.status]);
+    }, [lobbyState?.roundEndTime, lobbyState?.status, userChoice, lobbyState?.players, nickname]);
 
     // Host generates fighters if starting
     useEffect(() => {
@@ -93,21 +100,31 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
 
     // Trigger combat execution when backend says round is finished (everyone bet)
     useEffect(() => {
-        if (lobbyState?.status === 'round_finished' && battleState && !battleState.isFinished && !battleIntervalRef.current) {
-            // Run simulation locally
-            let currentState = { ...battleState };
-            const spdAcc = [0, 0];
+        if (lobbyState?.status === 'round_finished' && lobbyState?.battleResult && battleState && !battleState.isFinished && !battleIntervalRef.current) {
+
+            const serverResult = lobbyState.battleResult;
+            const fullLogs = serverResult.logs;
+            let currentLogIndex = 0;
+            let currentHps = [fighters![0].hp, fighters![1].hp];
 
             battleIntervalRef.current = setInterval(() => {
-                if (currentState.isFinished) {
+                if (currentLogIndex >= fullLogs.length) {
                     if (battleIntervalRef.current) {
                         clearInterval(battleIntervalRef.current);
                         battleIntervalRef.current = null;
                     }
 
+                    setBattleState({
+                        fighters: serverResult.fighters,
+                        hps: serverResult.hps,
+                        logs: fullLogs,
+                        winnerIdx: serverResult.winnerIdx,
+                        isFinished: true
+                    });
+
                     // Host submits score to backend and advances round
                     if (isHost) {
-                        const winner = currentState.winnerIdx;
+                        const winner = serverResult.winnerIdx;
                         const newScores: Record<string, number> = {};
                         const newPoints: Record<string, number> = {};
                         const newStreaks: Record<string, number> = {};
@@ -117,7 +134,7 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                             const pPoints = p.points || 0;
                             const pStreak = p.streak || 0;
 
-                            if (p.bet === winner) {
+                            if (p.bet === winner && p.bet !== -1) {
                                 newScores[p.nick] = pScore + 1;
                                 newStreaks[p.nick] = pStreak + 1;
                                 newPoints[p.nick] = pPoints + 15 + ((pStreak + 1) * 5);
@@ -144,23 +161,19 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                     return;
                 }
 
-                spdAcc[0] += currentState.fighters[0].spd;
-                spdAcc[1] += currentState.fighters[1].spd;
-                let nextState = currentState;
+                const log = fullLogs[currentLogIndex];
+                currentHps[log.defenderIdx] -= log.damage;
+                currentHps[log.defenderIdx] = Math.max(0, currentHps[log.defenderIdx]);
 
-                if (spdAcc[0] >= 2) {
-                    nextState = executeTurn(nextState, 0, 1);
-                    spdAcc[0] -= 2;
-                }
-                if (!nextState.isFinished && spdAcc[1] >= 2) {
-                    nextState = executeTurn(nextState, 1, 0);
-                    spdAcc[1] -= 2;
-                }
-                currentState = nextState;
-                setBattleState(currentState);
-            }, 100);
+                setBattleState(prev => ({
+                    ...prev!,
+                    hps: [...currentHps],
+                    logs: fullLogs.slice(0, currentLogIndex + 1)
+                }));
+                currentLogIndex++;
+            }, 300);
         }
-    }, [lobbyState?.status, battleState, isHost]);
+    }, [lobbyState?.status, lobbyState?.battleResult, isHost]);
 
     const placeBet = async (choiceIdx: number) => {
         setUserChoice(choiceIdx);
@@ -183,7 +196,7 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
             <div className="glass-panel" style={{ padding: '50px', width: '100%', maxWidth: '600px', margin: 'auto', textAlign: 'center', marginTop: '10vh' }}>
                 <h1 className="text-gold" style={{ fontSize: '3rem', margin: '0 0 20px', letterSpacing: '4px' }}>KONIEC GRY! 🏆</h1>
                 <h2 className="text-cyan mb-4">Zwycięzca: {sorted[0]?.nick}</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '30px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '30px', marginBottom: '30px' }}>
                     {sorted.map((p: any, idx) => (
                         <div key={p.nick} style={{ background: 'rgba(255,255,255,0.05)', padding: '15px 20px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span className="font-bold" style={{ fontSize: '1.2rem' }}>#{idx + 1} {p.nick}</span>
@@ -191,6 +204,20 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                         </div>
                     ))}
                 </div>
+                {isHost && (
+                    <button
+                        className="premium-btn text-gold"
+                        onClick={() => {
+                            fetch(`/api/lobby/${lobbyId}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'reset_lobby' })
+                            });
+                        }}
+                    >
+                        WRÓĆ DO POKOJU I ZAGRAJ PONOWNIE 🔄
+                    </button>
+                )}
             </div>
         );
     }
@@ -295,7 +322,9 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                                     <div key={p.nick} className="text-sm" style={{ padding: '5px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>
                                         <span className="font-bold">{p.nick}</span> (🏆{p.score || 0} 🪙{p.points || 0}): <br />
                                         {p.bet !== null ? (
-                                            lobbyState.status === 'round_active' ? (
+                                            p.bet === -1 ? (
+                                                <span className="text-muted">Koniec Czasu! ⏳</span>
+                                            ) : lobbyState.status === 'round_active' ? (
                                                 <span className="text-gold">Gotowy ✔️</span>
                                             ) : (
                                                 p.bet === 0 ? <span className="text-red">Lewy (🛡️)</span> : <span className="text-blue">Prawy (⚔️)</span>
@@ -310,8 +339,10 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
 
                         {isDone && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', animation: 'fadeIn 0.5s' }}>
-                                <div className={`result-banner ${battleState.winnerIdx === userChoice ? 'result-win' : 'result-lose'}`}>
-                                    {battleState.winnerIdx === userChoice ? (
+                                <div className={`result-banner ${userChoice === -1 ? 'result-lose' : battleState.winnerIdx === userChoice ? 'result-win' : 'result-lose'}`}>
+                                    {userChoice === -1 ? (
+                                        <span>BRAK CZASU! -20 🪙</span>
+                                    ) : battleState.winnerIdx === userChoice ? (
                                         <span>WYGRANA RUNDA! +1 🏆</span>
                                     ) : (
                                         <span>PRZEGRANA... STRATA SERII</span>
