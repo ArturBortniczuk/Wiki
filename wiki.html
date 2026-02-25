@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>WIKI-GLADIATORS: Arena 3.0 ⚔️</title>
+    <style>
+        :root { --primary: #e94560; --bg: #0f3460; --dark: #1a1a2e; --card: #16213e; --accent: #4ecca3; --gold: #ffd700; --red: #ff4d6d; --cyan: #00d2ff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        .header { text-align: center; margin-bottom: 20px; }
+        .score-board { font-size: 2rem; color: var(--accent); font-weight: bold; }
+        .streak { color: var(--gold); font-size: 1.1rem; }
+
+        .arena { display: grid; grid-template-columns: 350px 1fr 350px; gap: 25px; width: 100%; max-width: 1450px; align-items: start; margin-top: 20px; }
+
+        .card { background: var(--card); border: 2px solid #1f4068; border-radius: 20px; padding: 20px; transition: 0.4s ease; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card.winner { border-color: var(--gold); box-shadow: 0 0 40px var(--gold); transform: scale(1.02); }
+        
+        .img-box { width: 100%; height: 220px; border-radius: 12px; overflow: hidden; background: #000; margin-bottom: 15px; border: 1px solid #0f3460; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #0f3460; color: #888; text-align: center; font-size: 0.8rem; padding: 10px; box-sizing: border-box; }
+        
+        .hp-section { visibility: hidden; margin: 15px 0; }
+        .hp-text { font-size: 1rem; font-weight: bold; text-align: center; margin-bottom: 5px; font-family: 'Courier New', monospace; color: var(--gold); }
+        .hp-container { background: #111; height: 16px; border-radius: 8px; overflow: hidden; border: 1px solid #000; }
+        .hp-bar { background: linear-gradient(90deg, var(--red), var(--accent)); height: 100%; width: 100%; transition: width 0.3s ease; }
+
+        .stats-grid { font-size: 0.85rem; visibility: hidden; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 10px; border: 1px solid #2e2e4e; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .stat-item { border-bottom: 1px solid #2e2e4e; padding: 4px 0; cursor: help; position: relative; }
+        
+        .tags-container { min-height: 90px; margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
+        .tag-item { background: rgba(233, 69, 96, 0.2); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--primary); font-size: 0.75rem; cursor: help; position: relative; font-weight: bold; }
+        
+        .tooltip { visibility: hidden; opacity: 0; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #000; color: var(--gold); text-align: center; padding: 8px; border-radius: 8px; border: 1px solid var(--gold); width: 160px; z-index: 100; transition: 0.2s; font-size: 0.8rem; pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.9); }
+        .tag-item:hover .tooltip, .stat-item:hover .tooltip { visibility: visible; opacity: 1; }
+
+        .center-panel { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .terminal-header { background: #333; width: 100%; padding: 5px 20px; border-radius: 15px 15px 0 0; box-sizing: border-box; font-size: 0.7rem; color: #aaa; border: 2px solid #333; border-bottom: none; }
+        .battle-log { background: rgba(0, 0, 0, 0.9); color: #0f0; width: 100%; height: 380px; border-radius: 0 0 15px 15px; border: 2px solid #333; overflow-y: auto; padding: 15px; font-family: 'Courier New', monospace; font-size: 0.85rem; scroll-behavior: smooth; box-sizing: border-box; }
+
+        .bet-buttons { display: flex; gap: 40px; margin: 20px 0; }
+        .arrow-btn { background: var(--primary); border: none; color: white; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 2rem; transition: 0.3s; box-shadow: 0 4px 15px rgba(233, 69, 96, 0.5); }
+        .arrow-btn:hover:not(:disabled) { transform: scale(1.1); background: var(--red); }
+        .arrow-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #next-btn { background: var(--cyan); color: #000; padding: 15px 50px; border-radius: 30px; font-size: 1.1rem; border: none; font-weight: bold; cursor: pointer; display: none; }
+        
+        #loader { font-size: 1.2rem; color: var(--gold); margin: 40px; }
+        .pre-loading-indicator { font-size: 0.7rem; color: #555; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>WIKI-GLADIATORS: ARENA 3.0 ⚔️</h1>
+        <div class="score-board">SCORE: <span id="score">0</span></div>
+        <div class="streak">STREAK: <span id="streak">0</span></div>
+    </div>
+
+    <div id="loader">POBIERANIE WOJOWNIKÓW...</div>
+
+    <div class="arena" id="arena-ui" style="display:none">
+        <div id="card0" class="card">
+            <div class="img-box" id="img-cont0"></div>
+            <h3 id="title0" style="height: 50px; margin: 0 0 10px 0;"></h3>
+            <div class="tags-container" id="tags0"></div>
+            <div class="hp-section" id="hp-sec0">
+                <div class="hp-text"><span id="curr-hp0">0</span> / <span id="max-hp0">0</span> HP</div>
+                <div class="hp-container"><div id="hp-bar0" class="hp-bar"></div></div>
+            </div>
+            <div id="stats0" class="stats-grid"></div>
+        </div>
+
+        <div class="center-panel">
+            <div style="width: 100%;">
+                <div class="terminal-header">BATTLE_LOG_V3.0 // PRE_FETCHING_ACTIVE</div>
+                <div id="log" class="battle-log">OCZEKIWANIE NA DECYZJĘ...</div>
+            </div>
+            <div class="bet-buttons" id="bet-ui">
+                <button class="arrow-btn" id="btn0" onclick="startBattle(0)">←</button>
+                <button class="arrow-btn" id="btn1" onclick="startBattle(1)">→</button>
+            </div>
+            <button id="next-btn" onclick="initGame()">NASTĘPNA RUNDA ➡️</button>
+            <div id="pre-loader-status" class="pre-loading-indicator"></div>
+        </div>
+
+        <div id="card1" class="card">
+            <div class="img-box" id="img-cont1"></div>
+            <h3 id="title1" style="height: 50px; margin: 0 0 10px 0;"></h3>
+            <div class="tags-container" id="tags1"></div>
+            <div class="hp-section" id="hp-sec1">
+                <div class="hp-text"><span id="curr-hp1">0</span> / <span id="max-hp1">0</span> HP</div>
+                <div class="hp-container"><div id="hp-bar1" class="hp-bar"></div></div>
+            </div>
+            <div id="stats1" class="stats-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        let fighters = [];
+        let nextFighters = [];
+        let score = 0;
+        let streak = 0;
+        let isPreFetching = false;
+
+	const traitPool = [
+	    { n: 'SZAŁ', d: 'Atak++ Szybkość+', words: ['wojna', 'bitwa', 'atak', 'armia', 'żołnierz', 'front', 'militarny', 'miecz', 'batalia', 'ofensywa', 'agresja'], m: { atk: 1.5, spd: 1.2 } },
+	    { n: 'TWIERDZA', d: 'Obrona++ HP+', words: ['zamek', 'fortyfikacja', 'mury', 'beton', 'skała', 'stal', 'żelazo', 'kamień', 'schron', 'bunkier', 'tarcza'], m: { arm: 1.6, hp: 1.3 } },
+	    { n: 'MAJESTAT', d: 'HP++ Atak+', words: ['król', 'cesarz', 'prezydent', 'tron', 'korona', 'władza', 'pałac', 'imperium', 'rząd', 'dynastia', 'monarcha'], m: { hp: 1.5, atk: 1.2 } },
+	    { n: 'MISTYCYZM', d: 'Krytyk++ HP+', words: ['bóg', 'religia', 'kościół', 'święty', 'anioł', 'diabeł', 'wiara', 'duch', 'magia', 'rytuał', 'klątwa'], m: { crit: 25, hp: 1.2 } },
+	    { n: 'INTELEKT', d: 'Atak+ Krytyk+ Szybkość-', words: ['nauka', 'uniwersytet', 'teoria', 'fizyka', 'chemia', 'biologia', 'matematyka', 'badania', 'profesor', 'logika', 'filozofia'], m: { atk: 1.3, crit: 20, spd: 0.8 } },
+	    { n: 'GIGANT', d: 'HP+++ Szybkość--', words: ['góra', 'ocean', 'planeta', 'kosmos', 'galaktyka', 'gwiazda', 'słońce', 'księżyc', 'wszechświat', 'gigantyczny', 'kontynent'], m: { hp: 1.8, spd: 0.6 } },
+	    { n: 'ZWINNOŚĆ', d: 'Unik++ Szybkość+', words: ['sport', 'piłka', 'bieg', 'zwinny', 'szybki', 'rower', 'pływanie', 'skok', 'taniec', 'akrobatyka', 'olimpiada'], m: { eva: 25, spd: 1.3 } },
+	    { n: 'TECHNOLOGIA', d: 'Atak++ Obrona+', words: ['komputer', 'internet', 'telefon', 'maszyna', 'robot', 'elektronika', 'procesor', 'oprogramowanie', 'sieć', 'laser', 'energia'], m: { atk: 1.4, arm: 1.2 } },
+	    { n: 'DZIKOŚĆ', d: 'Atak+ Unik+', words: ['zwierzę', 'lew', 'tygrys', 'wilk', 'ptak', 'las', 'dżungla', 'natura', 'ssak', 'gad', 'owad', 'drapieżnik'], m: { atk: 1.2, eva: 15 } },
+	    { n: 'KULTURA', d: 'HP+ Unik+', words: ['film', 'aktor', 'muzyka', 'zespół', 'koncert', 'sztuka', 'obraz', 'malarz', 'książka', 'teatr', 'kino'], m: { hp: 1.2, eva: 10 } },
+	    { n: 'TRANSPORT', d: 'Szybkość++ Obrona+', words: ['samochód', 'pociąg', 'samolot', 'statek', 'droga', 'most', 'silnik', 'transport', 'podróż', 'kolej', 'lotnisko'], m: { spd: 1.4, arm: 1.2 } },
+	    { n: 'ZABÓJCA', d: 'Krytyk+++ HP--', words: ['śmierć', 'morderstwo', 'zabójca', 'trucizna', 'krew', 'ofiara', 'egzekucja', 'zamach', 'sztylet', 'cień', 'kat'], m: { crit: 40, hp: 0.6, atk: 1.3 } },
+	    { n: 'DYPLOMACJA', d: 'Obrona+ HP+ Atak-', words: ['prawo', 'traktat', 'sąd', 'polityka', 'senat', 'ustawa', 'kodeks', 'konstytucja', 'parlament', 'ambasador', 'negocjacje'], m: { arm: 1.3, hp: 1.2, atk: 0.8 } },
+	    { n: 'FLORA', d: 'HP++ Obrona+', words: ['kwiat', 'drzewo', 'roślina', 'ogród', 'botanika', 'liść', 'puszcza', 'flora', 'park', 'sad', 'ekosystem'], m: { hp: 1.4, arm: 1.2 } },
+	    { n: 'GEOGRAFIA', d: 'Obrona++ Szybkość-', words: ['mapa', 'kraj', 'państwo', 'region', 'prowincja', 'granica', 'terytorium', 'geografia', 'atlas', 'wyspa', 'półwysep'], m: { arm: 1.4, spd: 0.9 } },
+	    { n: 'KULINARIA', d: 'HP++ Szybkość-', words: ['kuchnia', 'jedzenie', 'gotowanie', 'potrawa', 'restauracja', 'chleb', 'wino', 'cukier', 'mięso', 'warzywo', 'smak'], m: { hp: 1.4, spd: 0.9 } },
+	    { n: 'MEDYCYNA', d: 'HP+++ Atak-', words: ['lekarz', 'szpital', 'medycyna', 'pacjent', 'choroba', 'leczenie', 'lek', 'anatomia', 'zdrowie', 'operacja', 'klinika'], m: { hp: 1.6, atk: 0.7 } },
+	    { n: 'HANDEL', d: 'Obrona+ Szybkość+', words: ['pieniądze', 'bank', 'handel', 'giełda', 'waluta', 'biznes', 'firma', 'rynek', 'eksport', 'podatek', 'finanse'], m: { arm: 1.2, spd: 1.2 } },
+	    { n: 'MUZEUM', d: 'HP++ Krytyk-', words: ['historia', 'zabytek', 'archeologia', 'wykopaliska', 'muzeum', 'antyku', 'przeszłość', 'kronika', 'dziedzictwo', 'eksponat', 'era'], m: { hp: 1.4, crit: -10 } },
+	    { n: 'DOMATOR', d: 'Obrona+ HP+', words: ['dom', 'budynek', 'mieszkanie', 'rodzina', 'dziecko', 'ulica', 'dzielnica', 'architektura', 'osiedle', 'wnętrze', 'komfort'], m: { arm: 1.2, hp: 1.2 } }
+	];
+
+async function fetchFighter() {
+            let res = null;
+            while (!res) {
+                const rnd = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&list=random&rnlimit=1&rnnamespace=0&format=json&origin=*`);
+                const rndD = await rnd.json();
+                const title = rndD.query.random[0].title;
+                const stat = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions&titles=${encodeURIComponent(title)}&format=json&origin=*`);
+                const statD = await stat.json();
+                const page = Object.values(statD.query.pages)[0];
+
+                if (page.length && page.length > 10000) {
+                    const imgReq = await fetch(`https://pl.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+                    const imgD = await imgReq.json();
+                    
+                    // DEFINIUJEMY ZMIENNĄ TEXT (tutaj był błąd)
+                    const text = (imgD.extract || "").toLowerCase();
+
+                    let f = {
+                        title: title, 
+                        img: imgD.thumbnail ? imgD.thumbnail.source : null,
+                        hp: Math.floor(page.length / 5),
+                        atk: Math.max(40, (page.images ? page.images.length * 15 : 40)),
+                        arm: 15, // Bazowy pancerz na stałe 15%
+                        spd: 1.0, 
+                        crit: 25, 
+                        eva: 10, 
+                        traits: [], 
+                        raw: page.length,
+                        imgCount: page.images ? page.images.length : 0,
+                        revCount: page.revisions ? page.revisions.length : 1
+                    };
+                    
+                    // LOGIKA PRZETWARZANIA CECH
+                    traitPool.forEach(t => {
+                        const hasWord = t.words.some(word => 
+                            text.includes(word) || title.toLowerCase().includes(word)
+                        );
+
+                        if (hasWord) {
+                            f.traits.push(t);
+                            if (t.m.hp) f.hp *= t.m.hp;
+                            if (t.m.atk) f.atk *= t.m.atk;
+                            if (t.m.arm) f.arm *= t.m.arm;
+                            if (t.m.spd) f.spd *= t.m.spd;
+                            if (t.m.crit) f.crit += t.m.crit;
+                            if (t.m.eva) f.eva += t.m.eva;
+                        }
+                    });
+                    
+                    f.maxHp = Math.floor(f.hp); 
+                    f.arm = Math.min(85, Math.floor(f.arm)); 
+                    f.atk = Math.floor(f.atk);
+                    f.crit = Math.min(75, f.crit); 
+                    f.eva = Math.min(60, f.eva);
+                    res = f;
+                }
+            }
+            return res;
+        }
+
+        async function preFetchNext() {
+            if (isPreFetching) return;
+            isPreFetching = true;
+            document.getElementById('pre-loader-status').innerText = "BUFOROWANIE KOLEJNEJ RUNDY...";
+            nextFighters = [await fetchFighter(), await fetchFighter()];
+            document.getElementById('pre-loader-status').innerText = "KOLEJNI WOJOWNICY GOTOWI ✅";
+            isPreFetching = false;
+        }
+
+        async function initGame() {
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('arena-ui').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('bet-ui').style.display = 'flex';
+            document.getElementById('log').innerHTML = "SYSTEM READY.<br>";
+            
+            if (nextFighters.length === 2) {
+                fighters = nextFighters;
+                nextFighters = [];
+                document.getElementById('pre-loader-status').innerText = "";
+            } else {
+                fighters = [await fetchFighter(), await fetchFighter()];
+            }
+            
+            fighters.forEach((f, i) => {
+                document.getElementById(`title${i}`).innerText = f.title;
+                document.getElementById(`img-cont${i}`).innerHTML = f.img ? `<img src="${f.img}">` : `<div class="no-img">BRAK WIZUALIZACJI</div>`;
+                document.getElementById(`tags${i}`).innerHTML = f.traits.map(t => `<div class="tag-item">${t.n}<div class="tooltip">${t.d}</div></div>`).join('');
+                document.getElementById(`hp-sec${i}`).style.visibility = "hidden";
+                document.getElementById(`stats${i}`).style.visibility = "hidden";
+                
+                document.getElementById(`stats${i}`).innerHTML = `
+                    <div class="stat-item">ATK: ${f.atk}<div class="tooltip">Baza + ${f.imgCount} obrazków</div></div>
+                    <div class="stat-item">ARM: ${f.arm}%<div class="tooltip">Baza + ${f.revCount} edycji</div></div>
+                    <div class="stat-item">SPD: ${f.spd.toFixed(1)}<div class="tooltip">Szybkość bazowa: 1.0</div></div>
+                    <div class="stat-item">CRIT: ${f.crit}%<div class="tooltip">Bazowo 25% + cechy</div></div>
+                    <div class="stat-item">UNIK: ${f.eva}%<div class="tooltip">Bazowo 10% + cechy</div></div>
+                    <div class="stat-item">ROZMIAR: ${f.raw}<div class="tooltip">Łączna liczba bajtów treści</div></div>`;
+                    
+                document.getElementById(`curr-hp${i}`).innerText = f.maxHp;
+                document.getElementById(`max-hp${i}`).innerText = f.maxHp;
+                document.getElementById(`hp-bar${i}`).style.width = "100%";
+                document.getElementById(`card${i}`).classList.remove('winner');
+                document.getElementById(`btn${i}`).disabled = false;
+            });
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('arena-ui').style.display = 'grid';
+        }
+
+        async function startBattle(choice) {
+            document.getElementById('btn0').disabled = true;
+            document.getElementById('btn1').disabled = true;
+            document.querySelectorAll('.hp-section, .stats-grid').forEach(e => e.style.visibility = "visible");
+            
+            preFetchNext(); // Zaczyna ładowanie kolejnej rundy w tle
+
+            let h = [fighters[0].maxHp, fighters[1].maxHp];
+            let t = [0, 0];
+            const lb = document.getElementById('log');
+            lb.innerHTML = "=== INICJACJA WALKI ===<br>";
+
+            while (h[0] > 0 && h[1] > 0) {
+                t[0] += fighters[0].spd; t[1] += fighters[1].spd;
+                if (t[0] >= 2) {
+                    processTurn(0, 1, h, lb); t[0] -= 2;
+                }
+                if (h[1] <= 0) break;
+                if (t[1] >= 2) {
+                    processTurn(1, 0, h, lb); t[1] -= 2;
+                }
+                lb.scrollTop = lb.scrollHeight;
+                await new Promise(r => setTimeout(r, 60));
+            }
+
+            const winner = h[0] > h[1] ? 0 : 1;
+            document.getElementById(`card${winner}`).classList.add('winner');
+            document.getElementById('bet-ui').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+
+            if (choice === winner) {
+                streak++; score += (15 + streak * 5);
+                lb.innerHTML += `<br><span style="color:var(--gold)">TRAFIONY! +${15+streak*5} pkt</span>`;
+            } else {
+                streak = 0; score = Math.max(0, score - 20);
+                lb.innerHTML += `<br><span style="color:var(--red)">PUDŁO! -20 pkt</span>`;
+            }
+            document.getElementById('score').innerText = score;
+            document.getElementById('streak').innerText = streak;
+        }
+
+        function processTurn(atkIdx, defIdx, h, lb) {
+            const fAtk = fighters[atkIdx];
+            const fDef = fighters[defIdx];
+            if (Math.random() * 100 < fDef.eva) {
+                lb.innerHTML += `<span style="color:#aaa">[${atkIdx?'P':'L'}] UNIK!</span><br>`; return;
+            }
+            const range = fAtk.atk * 0.25;
+            const baseDmg = fAtk.atk + (Math.random() * range * 2 - range);
+            const isCrit = Math.random() * 100 < fAtk.crit;
+            let finalDmg = Math.max(10, baseDmg * (1 - fDef.arm/100)) * (isCrit ? 2 : 1);
+            h[defIdx] -= finalDmg;
+            const color = atkIdx === 0 ? 'var(--red)' : 'var(--accent)';
+            lb.innerHTML += `<span style="color:${color}">[${atkIdx?'P':'L'}] ${isCrit?'★CRIT★ ':''}Atak za ${Math.floor(finalDmg)}</span><br>`;
+            updateUI(h);
+        }
+
+        function updateUI(h) {
+            for(let i=0; i<2; i++) {
+                let c = Math.max(0, Math.floor(h[i]));
+                document.getElementById(`curr-hp${i}`).innerText = c;
+                document.getElementById(`hp-bar${i}`).style.width = (c / fighters[i].maxHp * 100) + "%";
+            }
+        }
+        initGame();
+    </script>
+</body>
+</html>
