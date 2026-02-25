@@ -25,7 +25,9 @@ export async function POST(req: Request) {
                     isHost: true,
                     ready: false,
                     bet: null,
-                    score: 0
+                    score: 0,
+                    points: 0,
+                    streak: 0
                 }
             ],
             fighters: null,

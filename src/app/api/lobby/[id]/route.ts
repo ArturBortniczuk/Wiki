@@ -42,7 +42,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                     isHost: false,
                     ready: false,
                     bet: null,
-                    score: 0
+                    score: 0,
+                    points: 0,
+                    streak: 0
                 });
             }
         }
@@ -85,10 +87,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             state.roundEndTime = null;
         }
 
+        if (updates.action === 'spend_points') {
+            const player = state.players.find((p: any) => p.nick === updates.playerNick);
+            if (player && player.points >= updates.cost) {
+                player.points -= updates.cost;
+            }
+        }
+
         if (updates.action === 'update_scores') {
             state.players.forEach((p: any) => {
-                if (updates.scores[p.nick] !== undefined) {
+                if (updates.scores && updates.scores[p.nick] !== undefined) {
                     p.score = updates.scores[p.nick];
+                }
+                if (updates.points && updates.points[p.nick] !== undefined) {
+                    p.points = updates.points[p.nick];
+                }
+                if (updates.streaks && updates.streaks[p.nick] !== undefined) {
+                    p.streak = updates.streaks[p.nick];
                 }
             });
 

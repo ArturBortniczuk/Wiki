@@ -14,7 +14,11 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
     // UI state
     const [userChoice, setUserChoice] = useState<number | null>(null);
     const [loadingMsg, setLoadingMsg] = useState("OCZEKIWANIE NA GLADIATORÓW...");
-    const [score, setScore] = useState(0); // local tracking of points for shop
+
+    const myPlayer = lobbyState?.players?.find((p: any) => p.nick === nickname) || {};
+    const myPoints = myPlayer.points || 0;
+    const myScore = myPlayer.score || 0;
+    const myStreak = myPlayer.streak || 0;
 
     const battleIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -28,7 +32,11 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                     setLobbyState(data);
 
                     // Sync fighters when they arrive
-                    if (data.fighters && (!fighters || data.fighters[0].title !== fighters[0].title)) {
+                    if (data.status === 'starting' && fighters) {
+                        setFighters(null);
+                        setBattleState(null);
+                        setUserChoice(null);
+                    } else if (data.fighters && (!fighters || data.fighters[0].title !== fighters[0].title)) {
                         setFighters(data.fighters);
                         setUserChoice(null);
                         setBattleState({
@@ -87,11 +95,22 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                     if (isHost) {
                         const winner = currentState.winnerIdx;
                         const newScores: Record<string, number> = {};
+                        const newPoints: Record<string, number> = {};
+                        const newStreaks: Record<string, number> = {};
 
                         lobbyState.players.forEach((p: any) => {
                             const pScore = p.score || 0;
+                            const pPoints = p.points || 0;
+                            const pStreak = p.streak || 0;
+
                             if (p.bet === winner) {
                                 newScores[p.nick] = pScore + 1;
+                                newStreaks[p.nick] = pStreak + 1;
+                                newPoints[p.nick] = pPoints + 15 + ((pStreak + 1) * 5);
+                            } else {
+                                newScores[p.nick] = pScore;
+                                newStreaks[p.nick] = 0;
+                                newPoints[p.nick] = Math.max(0, pPoints - 20);
                             }
                         });
 
@@ -99,7 +118,12 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                             fetch(`/api/lobby/${lobbyId}`, {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'update_scores', scores: newScores })
+                                body: JSON.stringify({
+                                    action: 'update_scores',
+                                    scores: newScores,
+                                    points: newPoints,
+                                    streaks: newStreaks
+                                })
                             });
                         }, 2000); // 2 second pause before advancing UI
                     }
@@ -139,11 +163,34 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
 
 
 
+    if (lobbyState?.status === 'finished') {
+        const sorted = [...(lobbyState.players || [])].sort((a: any, b: any) => b.score - a.score);
+        return (
+            <div className="glass-panel" style={{ padding: '50px', width: '100%', maxWidth: '600px', margin: 'auto', textAlign: 'center', marginTop: '10vh' }}>
+                <h1 className="text-gold" style={{ fontSize: '3rem', margin: '0 0 20px', letterSpacing: '4px' }}>KONIEC GRY! 🏆</h1>
+                <h2 className="text-cyan mb-4">Zwycięzca: {sorted[0]?.nick}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '30px' }}>
+                    {sorted.map((p: any, idx) => (
+                        <div key={p.nick} style={{ background: 'rgba(255,255,255,0.05)', padding: '15px 20px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span className="font-bold" style={{ fontSize: '1.2rem' }}>#{idx + 1} {p.nick}</span>
+                            <span><span className="text-gold font-bold">{p.score}</span> Rundy (Kasa: {p.points || 0})</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     if (!fighters || !battleState) {
         return (
             <div className="loading-container">
                 <div className="spinner" />
                 <h2 className="loading-text">{loadingMsg}</h2>
+                {lobbyState?.players && (
+                    <div style={{ marginTop: '20px', fontSize: '0.9rem', color: 'gray' }}>
+                        Oczekiwanie na graczy: {lobbyState.players.length}
+                    </div>
+                )}
             </div>
         );
     }
@@ -157,13 +204,14 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
             {/* Header / Scoreboard */}
             <div className="arena-header-container glass-panel">
                 <div className="arena-score">
-                    <span className="text-muted">PUNKTY SKLEPU:</span> <span className="text-cyan">{score}</span>
+                    <span className="text-muted">PUNKTY SKLEPU:</span> <span className="text-cyan">{myPoints} 🪙</span>
                 </div>
                 <h1 className="arena-header-title">
                     WIKI-GLADIATORS ONLINE
                 </h1>
                 <div className="arena-streak">
-                    <span className="text-muted">WYGRANE:</span> <span className="text-gold">{lobbyState?.players?.find((p: any) => p.nick === nickname)?.score || 0} 🏆</span>
+                    <span className="text-muted">WYGRANE:</span> <span className="text-gold">{myScore} 🏆</span>
+                    <span className="text-muted" style={{ marginLeft: '15px' }}>SERIA:</span> <span className="text-red">{myStreak} 🔥</span>
                 </div>
             </div>
 
@@ -178,8 +226,12 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                         isWinner={battleState.winnerIdx === 0}
                         shopEnabled={lobbyState?.settings?.shop}
                         onRevealStat={(cost) => {
-                            if (score >= cost) {
-                                setScore(s => s - cost);
+                            if (myPoints >= cost) {
+                                fetch(`/api/lobby/${lobbyId}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'spend_points', playerNick: nickname, cost })
+                                });
                                 return true;
                             }
                             return false;
@@ -217,6 +269,18 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                             </>
                         )}
 
+                        <div style={{ marginTop: '20px', width: '100%', padding: '10px', background: 'rgba(0,0,0,0.5)', borderRadius: '10px' }}>
+                            <h4 className="text-gold text-center mb-2" style={{ letterSpacing: '2px' }}>ZAKŁADY</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '10px' }}>
+                                {lobbyState?.players?.map((p: any) => (
+                                    <div key={p.nick} className="text-sm" style={{ padding: '5px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>
+                                        <span className="font-bold">{p.nick}</span>: <br />
+                                        {p.bet === 0 ? <span className="text-red">Lewy (🛡️)</span> : p.bet === 1 ? <span className="text-blue">Prawy (⚔️)</span> : <span className="text-muted">Myśli...</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {isDone && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', animation: 'fadeIn 0.5s' }}>
                                 <div className={`result-banner ${battleState.winnerIdx === userChoice ? 'result-win' : 'result-lose'}`}>
@@ -249,7 +313,7 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
 
                         {lobbyState?.status === 'starting' && (
                             <div className="sys-info">
-                                &gt;&gt;&gt; BUFOROWANIE DANYCH SIECIOWYCH &lt;&lt;&lt;
+                                &gt;&gt;&gt; BUFOROWANIE NOWEJ ARENY &lt;&lt;&lt;
                             </div>
                         )}
                     </div>
@@ -264,8 +328,12 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                         isWinner={battleState.winnerIdx === 1}
                         shopEnabled={lobbyState?.settings?.shop}
                         onRevealStat={(cost) => {
-                            if (score >= cost) {
-                                setScore(s => s - cost);
+                            if (myPoints >= cost) {
+                                fetch(`/api/lobby/${lobbyId}`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'spend_points', playerNick: nickname, cost })
+                                });
                                 return true;
                             }
                             return false;
