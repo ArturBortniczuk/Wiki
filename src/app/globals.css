@@ -1,0 +1,86 @@
+:root {
+  --primary: #e94560;
+  --bg-dark: #0f3460;
+  --bg-darker: #1a1a2e;
+  --card-bg: rgba(22, 33, 62, 0.85);
+  --accent: #4ecca3;
+  --gold: #ffd700;
+  --red: #ff4d6d;
+  --cyan: #00d2ff;
+  --text-main: #ffffff;
+  --text-muted: #a0a0b0;
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: radial-gradient(circle at center top, var(--bg-dark), var(--bg-darker) 80%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Custom Webkit Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--red);
+}
+
+/* Utility Classes */
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.premium-btn {
+  background: linear-gradient(135deg, var(--primary), var(--red));
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+}
+
+.premium-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(233, 69, 96, 0.6);
+}
+
+.premium-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, var(--cyan), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
