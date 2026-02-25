@@ -38,7 +38,11 @@ export default function BattleLog({ logs, fighters }: BattleLogProps) {
                         }
 
                         const isLeft = log.attackerIdx === 0;
-                        const sideLab = isLeft ? '[L]' : '[P]';
+                        const attackerName = fighters[log.attackerIdx].title.length > 15
+                            ? fighters[log.attackerIdx].title.substring(0, 15) + "..."
+                            : fighters[log.attackerIdx].title;
+
+                        const sideLab = `[${attackerName}]`;
                         const cls = isLeft ? 'log-left' : 'log-right';
 
                         if (log.evaded) {

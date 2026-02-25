@@ -139,11 +139,18 @@ export default function Arena() {
             <div className="arena-grid">
 
                 {/* Left Fighter */}
-                <div>
+                <div style={{ justifySelf: 'center', width: '100%' }}>
                     <FighterCard
                         fighter={fighters[0]}
                         currentHp={battleState.hps[0]}
                         isWinner={battleState.winnerIdx === 0}
+                        onRevealStat={(cost) => {
+                            if (score >= cost) {
+                                setScore(s => s - cost);
+                                return true;
+                            }
+                            return false;
+                        }}
                     />
                 </div>
 
@@ -201,11 +208,18 @@ export default function Arena() {
                 </div>
 
                 {/* Right Fighter */}
-                <div>
+                <div style={{ justifySelf: 'center', width: '100%' }}>
                     <FighterCard
                         fighter={fighters[1]}
                         currentHp={battleState.hps[1]}
                         isWinner={battleState.winnerIdx === 1}
+                        onRevealStat={(cost) => {
+                            if (score >= cost) {
+                                setScore(s => s - cost);
+                                return true;
+                            }
+                            return false;
+                        }}
                     />
                 </div>
 

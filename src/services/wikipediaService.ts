@@ -27,6 +27,7 @@ export interface Fighter {
   raw: number;
   imgCount: number;
   revCount: number;
+  tooltips: Record<string, string>;
 }
 
 export const traitPool: Trait[] = [
@@ -59,7 +60,7 @@ export async function fetchFighter(): Promise<Fighter> {
       const rnd = await fetch('https://pl.wikipedia.org/w/api.php?action=query&list=random&rnlimit=1&rnnamespace=0&format=json&origin=*', { cache: 'no-store' });
       const rndD = await rnd.json();
       const title = rndD.query.random[0].title;
-      
+
       const stat = await fetch(`https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions&titles=${encodeURIComponent(title)}&format=json&origin=*`, { cache: 'no-store' });
       const statD = await stat.json();
       const page = Object.values(statD.query.pages)[0] as any;
@@ -67,27 +68,43 @@ export async function fetchFighter(): Promise<Fighter> {
       if (page.length && page.length > 10000) {
         const imgReq = await fetch(`https://pl.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { cache: 'no-store' });
         const imgD = await imgReq.json();
-        
+
         const text = (imgD.extract || "").toLowerCase();
+
+        const baseHp = page.length / 5;
+        const baseAtk = Math.max(40, (page.images ? page.images.length * 15 : 40));
+        const revs = page.revisions ? page.revisions.length : 1;
+        const baseArm = 10 + Math.min(50, revs * 2);
+        const baseSpd = 1.0;
+        const baseCrit = 5 + Math.min(30, (page.length % 100) / 2);
+        const baseEva = Math.max(5, 30 - page.length / 3000);
 
         let f: any = {
           id: Math.random().toString(36).substring(7),
-          title: title, 
+          title: title,
           img: imgD.thumbnail ? imgD.thumbnail.source : null,
-          hp: Math.floor(page.length / 5),
-          atk: Math.max(40, (page.images ? page.images.length * 15 : 40)),
-          arm: 15, // Base armor
-          spd: 1.0, 
-          crit: 25, 
-          eva: 10, 
-          traits: [], 
+          hp: baseHp,
+          atk: baseAtk,
+          arm: baseArm,
+          spd: baseSpd,
+          crit: baseCrit,
+          eva: baseEva,
+          traits: [],
           raw: page.length,
           imgCount: page.images ? page.images.length : 0,
-          revCount: page.revisions ? page.revisions.length : 1
+          revCount: revs,
+          tooltips: {
+            hp: `Długość tekstu (${page.length} znaków) / 5`,
+            atk: `Baza 40 + (Liczba obrazów: ${page.images ? page.images.length : 0} * 15)`,
+            arm: `Baza 10% + 2% za każdą ostatnią edycję (${revs})`,
+            spd: `Szybkość bazowa 1.0`,
+            crit: `Baza 5% + entropia z końcówki rozmiaru pliku`,
+            eva: `Zwinność spada wraz z długością artykułu (Start 30%)`
+          }
         };
-        
+
         traitPool.forEach(t => {
-          const hasWord = t.words.some(word => 
+          const hasWord = t.words.some(word =>
             text.includes(word) || title.toLowerCase().includes(word)
           );
 
@@ -101,12 +118,12 @@ export async function fetchFighter(): Promise<Fighter> {
             if (t.m.eva) f.eva += t.m.eva;
           }
         });
-        
-        f.maxHp = Math.floor(f.hp); 
+
+        f.maxHp = Math.floor(f.hp);
         f.hp = Math.floor(f.hp);
-        f.arm = Math.min(85, Math.floor(f.arm)); 
+        f.arm = Math.min(85, Math.floor(f.arm));
         f.atk = Math.floor(f.atk);
-        f.crit = Math.min(75, f.crit); 
+        f.crit = Math.min(75, f.crit);
         f.eva = Math.min(60, f.eva);
         res = f as Fighter;
       }
