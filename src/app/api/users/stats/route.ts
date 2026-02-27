@@ -7,15 +7,8 @@ const JWT_SECRET = process.env.wiki_JWT_SECRET || 'super-secret-fallback-key-for
 
 export async function POST(req: Request) {
     try {
-        const cookieHeader = req.headers.get('cookie') || '';
-        const cookies = Object.fromEntries(
-            cookieHeader.split('; ').map(c => {
-                const [key, ...v] = c.split('=');
-                return [key, decodeURIComponent(v.join('='))];
-            }).filter(c => c[0])
-        );
-
-        const token = cookies['auth_token'];
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth_token')?.value;
 
         if (!token) {
             return NextResponse.json({ error: 'Użytkownik niezalogowany' }, { status: 401 });
