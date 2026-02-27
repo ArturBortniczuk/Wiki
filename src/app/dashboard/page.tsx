@@ -159,8 +159,8 @@ export default function DashboardPage() {
                     <div>
                         <button
                             onClick={() => router.push('/')}
-                            className="return-btn mb-4"
-                            style={{ marginBottom: '15px', display: 'inline-block' }}
+                            className="return-btn-absolute"
+                            style={{ position: 'relative', top: '0', left: '0', marginBottom: '20px', padding: 0 }}
                         >
                             ← WRÓĆ DO LOBBY
                         </button>
