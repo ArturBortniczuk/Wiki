@@ -19,7 +19,8 @@ export default function Home() {
   const [shopEnabled, setShopEnabled] = useState(true);
 
   const startMultiplayer = async () => {
-    if (!nickname.trim()) {
+    const finalNickname = user?.username || nickname.trim();
+    if (!finalNickname) {
       alert("Podaj swój pseudonim!");
       return;
     }
@@ -32,13 +33,13 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lobbyId,
-          hostNick: nickname,
+          hostNick: finalNickname,
           settings: { rounds, timer, shopEnabled }
         })
       });
 
       // Redirect to lobby view with host flag and settings embedded
-      router.push(`/lobby/${lobbyId}?host=1&nick=${encodeURIComponent(nickname)}&r=${rounds}&t=${timer}&s=${shopEnabled ? 1 : 0}`);
+      router.push(`/lobby/${lobbyId}?host=1&nick=${encodeURIComponent(finalNickname)}&r=${rounds}&t=${timer}&s=${shopEnabled ? 1 : 0}`);
     } catch (err) {
       console.error("Failed to create lobby", err);
       alert("Błąd połączenia z serwerem Redis!");
