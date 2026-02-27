@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { redis } from '@/lib/redis';
 import jwt from 'jsonwebtoken';
 
@@ -6,17 +7,8 @@ const JWT_SECRET = process.env.wiki_JWT_SECRET || 'super-secret-fallback-key-for
 
 export async function GET(req: Request) {
     try {
-        // Note: in Next.js App Router we have to manually parse cookies from the request headers
-        // unless we use `next/headers` cookies(). For Edge compatibility we'll parse the raw string here
-        const cookieHeader = req.headers.get('cookie') || '';
-        const cookies = Object.fromEntries(
-            cookieHeader.split('; ').map(c => {
-                const [key, ...v] = c.split('=');
-                return [key, decodeURIComponent(v.join('='))];
-            }).filter(c => c[0])
-        );
-
-        const token = cookies['auth_token'];
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth_token')?.value;
 
         if (!token) {
             return NextResponse.json({ authenticated: false }, { status: 401 });
