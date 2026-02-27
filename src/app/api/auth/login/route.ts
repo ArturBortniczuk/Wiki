@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { redis } from '@/lib/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -44,13 +45,8 @@ export async function POST(req: Request) {
             { expiresIn: '7d' } // Session valid for 7 days
         );
 
-        // Create the response and set the HTTP-only cookie
-        const response = NextResponse.json(
-            { message: 'Zalogowano pomyślnie' },
-            { status: 200 }
-        );
-
-        response.cookies.set('auth_token', token, {
+        const cookieStore = await cookies();
+        cookieStore.set('auth_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
@@ -58,7 +54,11 @@ export async function POST(req: Request) {
             path: '/',
         });
 
-        return response;
+        // Create the response and set the HTTP-only cookie
+        return NextResponse.json(
+            { message: 'Zalogowano pomyślnie' },
+            { status: 200 }
+        );
 
     } catch (error) {
         console.error('Login error:', error);

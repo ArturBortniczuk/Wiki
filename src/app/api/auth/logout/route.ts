@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 export async function POST() {
-    const response = NextResponse.json(
+    const cookieStore = await cookies();
+    cookieStore.delete('auth_token');
+
+    return NextResponse.json(
         { message: 'Wylogowano pomyślnie' },
         { status: 200 }
     );
-
-    // Overwrite the auth_token cookie with an expired one to immediately clear it on the client
-    response.cookies.set('auth_token', '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 0, // Expire immediately
-        path: '/',
-    });
-
-    return response;
 }
