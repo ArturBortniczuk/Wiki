@@ -65,21 +65,35 @@ export default function Home() {
           user ? (
             <div
               onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-4 bg-gray-900/50 hover:bg-gray-800/80 cursor-pointer backdrop-blur-md rounded-xl p-2 pr-4 border border-gray-700 transition-colors"
+              className="user-profile-pill cursor-pointer"
+              style={{ cursor: 'pointer', transition: 'all 0.3s' }}
             >
-              <div className="flex flex-col items-end px-2 border-r border-gray-700">
-                <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Rozegrane <span className="text-white">{user.total_games}</span></span>
-                <span className="text-emerald-400 text-sm font-black">W {user.wins} / P {user.losses}</span>
+              <div className="profile-info" style={{ alignItems: 'flex-end', paddingRight: '10px', borderRight: '1px solid var(--border-color)' }}>
+                <span className="text-muted" style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Rozegrane <span className="text-main">{user.total_games}</span>
+                </span>
+                <span className="text-accent" style={{ fontSize: '0.9rem', fontWeight: '900', color: 'var(--accent)' }}>
+                  W {user.wins} / P {user.losses}
+                </span>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-white font-bold leading-none">{user.username}</span>
-                <button onClick={(e) => { e.stopPropagation(); logout(); }} className="text-red-400 text-xs text-left hover:text-red-300 font-bold transition-colors">Wyloguj się</button>
+              <div className="user-avatar" style={{ margin: '0 5px' }}>
+                {user.username.charAt(0).toUpperCase()}
+              </div>
+              <div className="profile-info" style={{ gap: '2px' }}>
+                <span className="profile-name" style={{ lineHeight: '1' }}>{user.username}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); logout(); }}
+                  style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: '0.75rem', fontWeight: 'bold', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                >
+                  Wyloguj się
+                </button>
               </div>
             </div>
           ) : (
             <button
               onClick={() => router.push('/dashboard')}
-              className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full border border-gray-600 transition-all shadow-lg"
+              className="premium-btn text-gold"
+              style={{ padding: '12px 30px', fontSize: '1rem', letterSpacing: '1px' }}
             >
               Zaloguj / Zarejestruj
             </button>
