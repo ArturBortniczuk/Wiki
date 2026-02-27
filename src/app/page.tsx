@@ -3,9 +3,13 @@
 import React, { useState } from 'react';
 import Arena from '@/components/Arena';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 export default function Home() {
   const router = useRouter();
+  const { user, logout, loading } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [gameMode, setGameMode] = useState<'menu' | 'solo' | 'multi_config'>('menu');
 
   // Multi config state
@@ -56,6 +60,33 @@ export default function Home() {
       <div className="bg-decoration-1" />
       <div className="bg-decoration-2" />
 
+      {/* Top Navigation / User Profile Banner */}
+      <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
+        {!loading && (
+          user ? (
+            <div className="flex items-center gap-4 bg-gray-900/50 backdrop-blur-md rounded-xl p-2 pr-4 border border-gray-700">
+              <div className="flex flex-col items-end px-2 border-r border-gray-700">
+                <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Rozegrane <span className="text-white">{user.total_games}</span></span>
+                <span className="text-emerald-400 text-sm font-black">W {user.wins} / P {user.losses}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-white font-bold">{user.username}</span>
+                <button onClick={logout} className="text-red-400 text-xs text-left hover:underline">Wyloguj się</button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full border border-gray-600 transition-all shadow-lg"
+            >
+              Zaloguj / Zarejestruj
+            </button>
+          )
+        )}
+      </div>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+
       <h1 className="landing-title">
         WIKI-GLADIATORS
       </h1>
@@ -90,11 +121,12 @@ export default function Home() {
             <label className="text-muted font-bold text-sm">Twój Pseudonim (Host)</label>
             <input
               type="text"
-              value={nickname}
+              value={nickname || user?.username || ''}
               onChange={e => setNickname(e.target.value)}
               maxLength={15}
               className="premium-input"
-              placeholder="Wpisz nick..."
+              placeholder={user ? user.username : "Wpisz nick..."}
+              disabled={!!user}
             />
           </div>
 

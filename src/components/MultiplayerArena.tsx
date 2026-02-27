@@ -145,6 +145,15 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                             }
                         });
 
+                        // Report my own stats to the global user leaderboard if logged in
+                        if (userChoice !== null) {
+                            fetch('/api/users/stats', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ result: (userChoice === winner && userChoice !== -1) ? 'win' : 'loss' })
+                            }).catch(console.error); // Silent catch if not logged in
+                        }
+
                         setTimeout(() => {
                             fetch(`/api/lobby/${lobbyId}`, {
                                 method: 'PATCH',
