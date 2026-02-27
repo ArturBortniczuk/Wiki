@@ -56,14 +56,15 @@ export const traitPool: Trait[] = [
   { n: 'DOMATOR', d: 'Obrona+ HP+', words: ['dom', 'budynek', 'mieszkanie', 'rodzina', 'dziecko', 'ulica', 'dzielnica', 'architektura', 'osiedle', 'wnętrze', 'komfort'], m: { arm: 1.2, hp: 1.2 } }
 ];
 
-import { redis } from '../lib/redis';
-
 export async function fetchFighter(): Promise<Fighter> {
-  const result = await redis.srandmember('wiki:fighters');
+  // Use relative URL to fetch from our server-side API Route instead of directly importing ioredis here
+  // which will break Webpack for React Client Components.
+  const response = await fetch('/api/fighters/random', { cache: 'no-store' });
 
-  if (!result) {
-    throw new Error('No fighters available in the database. Please run the seeder script first.');
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to fetch random fighter');
   }
 
-  return JSON.parse(result) as Fighter;
+  return response.json() as Promise<Fighter>;
 }
