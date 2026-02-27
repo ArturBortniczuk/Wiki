@@ -4,12 +4,10 @@ import React, { useState } from 'react';
 import Arena from '@/components/Arena';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthModal } from '@/components/auth/AuthModal';
 
 export default function Home() {
   const router = useRouter();
   const { user, logout, loading } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [gameMode, setGameMode] = useState<'menu' | 'solo' | 'multi_config'>('menu');
 
   // Multi config state
@@ -65,19 +63,22 @@ export default function Home() {
       <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
         {!loading && (
           user ? (
-            <div className="flex items-center gap-4 bg-gray-900/50 backdrop-blur-md rounded-xl p-2 pr-4 border border-gray-700">
+            <div
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center gap-4 bg-gray-900/50 hover:bg-gray-800/80 cursor-pointer backdrop-blur-md rounded-xl p-2 pr-4 border border-gray-700 transition-colors"
+            >
               <div className="flex flex-col items-end px-2 border-r border-gray-700">
                 <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Rozegrane <span className="text-white">{user.total_games}</span></span>
                 <span className="text-emerald-400 text-sm font-black">W {user.wins} / P {user.losses}</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-white font-bold">{user.username}</span>
-                <button onClick={logout} className="text-red-400 text-xs text-left hover:underline">Wyloguj się</button>
+              <div className="flex flex-col gap-1">
+                <span className="text-white font-bold leading-none">{user.username}</span>
+                <button onClick={(e) => { e.stopPropagation(); logout(); }} className="text-red-400 text-xs text-left hover:text-red-300 font-bold transition-colors">Wyloguj się</button>
               </div>
             </div>
           ) : (
             <button
-              onClick={() => setShowAuthModal(true)}
+              onClick={() => router.push('/dashboard')}
               className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full border border-gray-600 transition-all shadow-lg"
             >
               Zaloguj / Zarejestruj
@@ -85,8 +86,6 @@ export default function Home() {
           )
         )}
       </div>
-
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
       <h1 className="landing-title">
         WIKI-GLADIATORS
