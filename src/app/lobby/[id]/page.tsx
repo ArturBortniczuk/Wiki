@@ -12,6 +12,10 @@ import { Suspense } from 'react';
 function LobbyContent() {
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
+    const lobbyId = params.id as string;
+    const { user, loading } = useAuth();
+
     const isHostParam = searchParams.get('host') === '1';
     const initialNick = searchParams.get('nick') || '';
     const initialRounds = searchParams.get('r');
