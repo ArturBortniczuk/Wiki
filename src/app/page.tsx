@@ -78,9 +78,7 @@ export default function Home() {
       {/* Top Navigation / User Profile Banner */}
       <ProfileBadge />
 
-      <h1 className="landing-title">
-        WIKI-GLADIATORS
-      </h1>
+      <div style={{ marginTop: '80px' }} />
 
       <p className="landing-subtitle">
         Najpotężniejsza arena w polskim internecie. Zmierz się z absolutnym chaosem generowanym z zasobów Wikipedii. Gdzie algorytmy określają Twoje przetrwanie.

@@ -9,7 +9,16 @@ export default function ProfileBadge() {
     if (loading) return null;
 
     return (
-        <div className="absolute top-4 right-4 flex gap-4 items-center" style={{ zIndex: 9999 }}>
+        <div className="global-nav-bar">
+            {/* Left Side Logo */}
+            <div
+                className="global-nav-logo"
+                onClick={() => router.push('/')}
+            >
+                WIKI-GLADIATORS
+            </div>
+
+            {/* Right Side User State */}
             {user ? (
                 <div
                     onClick={() => router.push('/dashboard')}
