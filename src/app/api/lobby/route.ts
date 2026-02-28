@@ -10,6 +10,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing lobbyId or hostNick' }, { status: 400 });
         }
 
+        // Fetch host global stats
+        const hostKey = `user:${hostNick.toLowerCase()}`;
+        const hostData = await redis.hgetall(hostKey);
+        const globalWins = hostData && hostData.wins ? parseInt(hostData.wins, 10) : 0;
+        const globalLosses = hostData && hostData.losses ? parseInt(hostData.losses, 10) : 0;
+
         // Initial state of the new lobby
         const state = {
             id: lobbyId,
@@ -27,7 +33,9 @@ export async function POST(req: Request) {
                     bet: null,
                     score: 0,
                     points: 0,
-                    streak: 0
+                    streak: 0,
+                    globalWins,
+                    globalLosses
                 }
             ],
             fighters: null,

@@ -328,19 +328,28 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                             <h4 className="text-gold text-center mb-2" style={{ letterSpacing: '2px' }}>ZAKŁADY</h4>
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '10px' }}>
                                 {lobbyState?.players?.map((p: any) => (
-                                    <div key={p.nick} className="text-sm" style={{ padding: '5px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>
-                                        <span className="font-bold">{p.nick}</span> (🏆{p.score || 0} 🪙{p.points || 0}): <br />
-                                        {p.bet !== null ? (
-                                            p.bet === -1 ? (
-                                                <span className="text-muted">Koniec Czasu! ⏳</span>
-                                            ) : lobbyState.status === 'round_active' ? (
-                                                <span className="text-gold">Gotowy ✔️</span>
+                                    <div key={p.nick} className="text-sm" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
+                                            <span className="font-bold text-gold">{p.nick}</span>
+                                            <span className="text-muted" style={{ fontSize: '0.8rem' }}>Kariera: {p.globalWins || 0}W / {p.globalLosses || 0}L</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                            <span>Rundy: <span className="text-cyan">{p.score || 0}</span></span>
+                                            <span>Punkty: <span className="text-cyan">{p.points || 0}</span></span>
+                                        </div>
+                                        <div style={{ marginTop: '4px', textAlign: 'center', fontWeight: 'bold' }}>
+                                            {p.bet !== null ? (
+                                                p.bet === -1 ? (
+                                                    <span className="text-muted">Koniec Czasu! ⏳</span>
+                                                ) : lobbyState.status === 'round_active' ? (
+                                                    <span className="text-gold">Gotowy ✔️</span>
+                                                ) : (
+                                                    p.bet === 0 ? <span className="text-red">Lewy (🛡️)</span> : <span className="text-blue">Prawy (⚔️)</span>
+                                                )
                                             ) : (
-                                                p.bet === 0 ? <span className="text-red">Lewy (🛡️)</span> : <span className="text-blue">Prawy (⚔️)</span>
-                                            )
-                                        ) : (
-                                            <span className="text-muted">Myśli...</span>
-                                        )}
+                                                <span className="text-muted">Myśli...</span>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>

@@ -38,6 +38,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         if (updates.action === 'join') {
             const exists = state.players.find((p: any) => p.nick === updates.playerNick);
             if (!exists) {
+                // Fetch player's global stats
+                const playerKey = `user:${updates.playerNick.toLowerCase()}`;
+                const playerData = await redis.hgetall(playerKey);
+                const globalWins = playerData && playerData.wins ? parseInt(playerData.wins, 10) : 0;
+                const globalLosses = playerData && playerData.losses ? parseInt(playerData.losses, 10) : 0;
+
                 state.players.push({
                     nick: updates.playerNick,
                     isHost: false,
@@ -45,7 +51,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                     bet: null,
                     score: 0,
                     points: 0,
-                    streak: 0
+                    streak: 0,
+                    globalWins,
+                    globalLosses
                 });
             }
         }
