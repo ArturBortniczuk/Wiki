@@ -7,15 +7,11 @@ import MultiplayerArena from '@/components/MultiplayerArena';
 import ProfileBadge from '@/components/ProfileBadge';
 import { fetchFighter } from '@/services/wikipediaService';
 
-export default function LobbyPage() {
+import { Suspense } from 'react';
+
+function LobbyContent() {
     const router = useRouter();
     const params = useParams();
-    const searchParams = useSearchParams();
-
-    const lobbyId = params.id as string;
-    const { user, loading } = useAuth();
-
-    // URL params indicating player state
     const isHostParam = searchParams.get('host') === '1';
     const initialNick = searchParams.get('nick') || '';
     const initialRounds = searchParams.get('r');
