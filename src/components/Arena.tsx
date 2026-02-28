@@ -73,6 +73,14 @@ export default function Arena() {
 
                 // Calculate score
                 const winner = currentState.winnerIdx;
+
+                // Report my own stats to the global user leaderboard if logged in
+                fetch('/api/users/stats', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ result: (winner === choiceIdx) ? 'win' : 'loss' })
+                }).catch(console.error); // Silent catch if not logged in
+
                 if (winner === choiceIdx) {
                     setStreak(s => {
                         const newStreak = s + 1;
