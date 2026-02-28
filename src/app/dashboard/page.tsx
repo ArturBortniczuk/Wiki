@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function DashboardPage() {
     const { user, loading, checkSession, logout } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get('returnTo');
 
     // Auth local state
     const [isLogin, setIsLogin] = useState(true);
@@ -47,6 +49,11 @@ export default function DashboardPage() {
             const sessionValid = await checkSession();
             if (!sessionValid) {
                 throw new Error("Pomyślnie uwierzytelniono, ale nie odczytano sesji. Odśwież stronę.");
+            }
+
+            // Correctly route to the previous page if required, else to the authenticated dashboard view.
+            if (returnTo) {
+                router.push(returnTo);
             }
         } catch (err: any) {
             setError(err.message);

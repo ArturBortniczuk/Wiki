@@ -5,6 +5,7 @@ import { fetchFighter, Fighter } from '@/services/wikipediaService';
 import { BattleState, executeTurn } from '@/services/battleEngine';
 import FighterCard from './FighterCard';
 import BattleLog from './BattleLog';
+import ProfileBadge from './ProfileBadge';
 
 export default function Arena() {
     const [fighters, setFighters] = useState<Fighter[] | null>(null);
@@ -118,7 +119,8 @@ export default function Arena() {
 
     if (!fighters || !battleState) {
         return (
-            <div className="loading-container">
+            <div className="loading-container" style={{ position: 'relative' }}>
+                <ProfileBadge />
                 <div className="spinner" />
                 <h2 className="loading-text">{loadingMsg}</h2>
             </div>
@@ -130,6 +132,7 @@ export default function Arena() {
 
     return (
         <div style={{ width: '100%' }}>
+            <ProfileBadge />
 
             {/* Header / Scoreboard */}
             <div className="arena-header-container glass-panel">

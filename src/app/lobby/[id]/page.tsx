@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import MultiplayerArena from '@/components/MultiplayerArena';
+import ProfileBadge from '@/components/ProfileBadge';
 import { fetchFighter } from '@/services/wikipediaService';
 
 export default function LobbyPage() {
@@ -154,6 +155,7 @@ export default function LobbyPage() {
 
     return (
         <main className="landing-layout">
+            <ProfileBadge />
             <div className="bg-decoration-1" />
             <div className="bg-decoration-2" />
 
@@ -182,7 +184,7 @@ export default function LobbyPage() {
                         Wejdź do Pokoju
                     </button>
                     {!user && (
-                        <button onClick={() => router.push('/dashboard')} className="premium-btn" style={{ background: 'transparent', border: '1px dashed var(--gold)', color: 'var(--gold)', marginTop: '-10px', fontSize: '1rem', padding: '12px' }}>
+                        <button onClick={() => router.push(`/dashboard?returnTo=/lobby/${lobbyId}`)} className="premium-btn" style={{ background: 'transparent', border: '1px dashed var(--gold)', color: 'var(--gold)', marginTop: '-10px', fontSize: '1rem', padding: '12px' }}>
                             Zaloguj się / Załóż konto 👑
                         </button>
                     )}

@@ -4,14 +4,16 @@ import React, { useState } from 'react';
 import Arena from '@/components/Arena';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import ProfileBadge from '@/components/ProfileBadge';
 
 export default function Home() {
   const router = useRouter();
   const { user, logout, loading } = useAuth();
-  const [gameMode, setGameMode] = useState<'menu' | 'solo' | 'multi_config'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'solo' | 'multi_config' | 'multi_join'>('menu');
 
   // Multi config state
   const [nickname, setNickname] = useState('');
+  const [joinLobbyId, setJoinLobbyId] = useState('');
   const [rounds, setRounds] = useState('3');
   const [timer, setTimer] = useState('30');
   const [shopEnabled, setShopEnabled] = useState(true);
@@ -44,6 +46,20 @@ export default function Home() {
     }
   };
 
+  const handleJoinMultiplayer = () => {
+    const finalNickname = user?.username || nickname.trim();
+    if (!finalNickname) {
+      alert("Podaj swój pseudonim!");
+      return;
+    }
+    if (!joinLobbyId.trim() || joinLobbyId.length < 4) {
+      alert("Wpisz poprawny, 4-znakowy kod Lobby!");
+      return;
+    }
+
+    router.push(`/lobby/${joinLobbyId.toUpperCase()}`);
+  };
+
   if (gameMode === 'solo') {
     return (
       <main className="main-layout">
@@ -60,46 +76,7 @@ export default function Home() {
       <div className="bg-decoration-2" />
 
       {/* Top Navigation / User Profile Banner */}
-      <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
-        {!loading && (
-          user ? (
-            <div
-              onClick={() => router.push('/dashboard')}
-              className="user-profile-pill cursor-pointer"
-              style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-            >
-              <div className="profile-info" style={{ alignItems: 'flex-end', paddingRight: '10px', borderRight: '1px solid var(--border-color)' }}>
-                <span className="text-muted" style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Rozegrane <span className="text-main">{user.total_games}</span>
-                </span>
-                <span className="text-accent" style={{ fontSize: '0.9rem', fontWeight: '900', color: 'var(--accent)' }}>
-                  W {user.wins} / P {user.losses}
-                </span>
-              </div>
-              <div className="user-avatar" style={{ margin: '0 5px' }}>
-                {user.username.charAt(0).toUpperCase()}
-              </div>
-              <div className="profile-info" style={{ gap: '2px' }}>
-                <span className="profile-name" style={{ lineHeight: '1' }}>{user.username}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); logout(); }}
-                  style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: '0.75rem', fontWeight: 'bold', padding: 0, cursor: 'pointer', textAlign: 'left' }}
-                >
-                  Wyloguj się
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="premium-btn text-gold"
-              style={{ padding: '12px 30px', fontSize: '1rem', letterSpacing: '1px' }}
-            >
-              Zaloguj / Zarejestruj
-            </button>
-          )
-        )}
-      </div>
+      <ProfileBadge />
 
       <h1 className="landing-title">
         WIKI-GLADIATORS
@@ -117,19 +94,69 @@ export default function Home() {
           >
             Rozpocznij Solo
           </button>
-          <button
-            onClick={() => setGameMode('multi_config')}
-            className="premium-btn text-gold"
-            style={{ padding: '16px 40px', fontWeight: 900 }}
-          >
-            Graj Multi ⚔️
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setGameMode('multi_join')}
+              className="premium-btn text-cyan"
+              style={{ padding: '16px 20px', fontWeight: 900 }}
+            >
+              Dołącz 🔗
+            </button>
+            <button
+              onClick={() => setGameMode('multi_config')}
+              className="premium-btn text-gold"
+              style={{ padding: '16px 20px', fontWeight: 900 }}
+            >
+              Stwórz ⚔️
+            </button>
+          </div>
+        </div>
+      )}
+
+      {gameMode === 'multi_join' && (
+        <div className="glass-panel" style={{ padding: '30px', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', zIndex: 10 }}>
+          <h2 className="choice-title" style={{ textAlign: 'center', color: 'var(--cyan)' }}>Dołącz do Pokoju</h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label className="text-muted font-bold text-sm">Twój Pseudonim</label>
+            <input
+              type="text"
+              value={nickname || user?.username || ''}
+              onChange={e => setNickname(e.target.value)}
+              maxLength={15}
+              className="premium-input"
+              placeholder={user ? user.username : "Wpisz nick..."}
+              disabled={!!user}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label className="text-muted font-bold text-sm">Kod Lobby (4 znaki)</label>
+            <input
+              type="text"
+              maxLength={4}
+              value={joinLobbyId}
+              onChange={e => setJoinLobbyId(e.target.value.toUpperCase())}
+              className="premium-input"
+              style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '10px', textTransform: 'uppercase' }}
+              placeholder="----"
+            />
+          </div>
+
+          <div className="action-buttons" style={{ marginTop: '20px' }}>
+            <button onClick={() => setGameMode('menu')} className="bet-btn bet-left" style={{ width: 'auto', flex: 1 }}>
+              Wróć
+            </button>
+            <button onClick={handleJoinMultiplayer} className="bet-btn bet-right text-cyan" style={{ width: 'auto', flex: 1 }}>
+              Wejdź! 🔗
+            </button>
+          </div>
         </div>
       )}
 
       {gameMode === 'multi_config' && (
         <div className="glass-panel" style={{ padding: '30px', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px', zIndex: 10 }}>
-          <h2 className="choice-title" style={{ textAlign: 'center' }}>Konfiguracja Lobby</h2>
+          <h2 className="choice-title" style={{ textAlign: 'center', color: 'var(--gold)' }}>Nowy Pokój</h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <label className="text-muted font-bold text-sm">Twój Pseudonim (Host)</label>
