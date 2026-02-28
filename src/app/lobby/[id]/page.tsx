@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import MultiplayerArena from '@/components/MultiplayerArena';
 import { fetchFighter } from '@/services/wikipediaService';
 
@@ -11,6 +12,7 @@ export default function LobbyPage() {
     const searchParams = useSearchParams();
 
     const lobbyId = params.id as string;
+    const { user, loading } = useAuth();
 
     // URL params indicating player state
     const isHostParam = searchParams.get('host') === '1';
@@ -30,6 +32,22 @@ export default function LobbyPage() {
     // Pre-loading state
     const [isGenerating, setIsGenerating] = useState(false);
     const [genProgress, setGenProgress] = useState(0);
+
+    // Retrieve user session if page refreshed
+    useEffect(() => {
+        if (!isHostParam && typeof window !== 'undefined') {
+            if (user && user.username) {
+                // Official player login overrides local session
+                setNickname(user.username);
+            } else {
+                const savedNick = sessionStorage.getItem(`wiki_lobby_${lobbyId}`);
+                if (savedNick) {
+                    setNickname(savedNick);
+                    setHasJoined(true);
+                }
+            }
+        }
+    }, [isHostParam, lobbyId, user]);
 
     // Poll the redis lobby state
     useEffect(() => {
@@ -58,7 +76,7 @@ export default function LobbyPage() {
         fetchState();
         const interval = setInterval(fetchState, 2000);
         return () => clearInterval(interval);
-    }, [lobbyId, hasJoined]);
+    }, [lobbyId, hasJoined, gameStarted]);
 
     const handleJoinLobby = async () => {
         if (!nickname.trim()) {
@@ -74,6 +92,9 @@ export default function LobbyPage() {
             });
 
             if (res.ok) {
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem(`wiki_lobby_${lobbyId}`, nickname);
+                }
                 setHasJoined(true);
             } else {
                 const err = await res.json();
@@ -118,6 +139,19 @@ export default function LobbyPage() {
         );
     }
 
+    if (loading) {
+        return (
+            <main className="landing-layout">
+                <div className="bg-decoration-1" />
+                <div className="bg-decoration-2" />
+                <div className="center-console">
+                    <div className="spinner"></div>
+                    <p className="loading-text">AUTORYZACJA...</p>
+                </div>
+            </main>
+        );
+    }
+
     return (
         <main className="landing-layout">
             <div className="bg-decoration-1" />
@@ -139,12 +173,19 @@ export default function LobbyPage() {
                             className="premium-input"
                             placeholder="Wpisz nick..."
                             autoFocus
+                            disabled={!!user}
                         />
+                        {user && <span className="text-gold text-sm text-center">Zalogowano! Zapiszesz swój wynik na koncie.</span>}
                     </div>
 
                     <button onClick={handleJoinLobby} className="premium-btn" style={{ marginTop: '10px' }}>
                         Wejdź do Pokoju
                     </button>
+                    {!user && (
+                        <button onClick={() => router.push('/dashboard')} className="premium-btn" style={{ background: 'transparent', border: '1px dashed var(--gold)', color: 'var(--gold)', marginTop: '-10px', fontSize: '1rem', padding: '12px' }}>
+                            Zaloguj się / Załóż konto 👑
+                        </button>
+                    )}
                     <button onClick={() => router.push('/')} className="premium-btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '10px' }}>
                         Anuluj
                     </button>
