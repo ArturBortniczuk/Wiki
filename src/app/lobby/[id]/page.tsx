@@ -247,3 +247,11 @@ function LobbyContent() {
         </main>
     );
 }
+
+export default function LobbyPage() {
+    return (
+        <Suspense fallback={<div className="loading-container"><div className="spinner"></div><h2 className="loading-text">ŁĄCZENIE Z SERWEREM...</h2></div>}>
+            <LobbyContent />
+        </Suspense>
+    );
+}
