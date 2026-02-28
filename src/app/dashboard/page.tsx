@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function DashboardPage() {
+import { Suspense } from 'react';
+
+function DashboardContent() {
     const { user, loading, checkSession, logout } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -314,5 +316,13 @@ export default function DashboardPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function DashboardPage() {
+    return (
+        <Suspense fallback={<div className="loading-container"><div className="spinner"></div><h2 className="loading-text">ŁADOWANIE DASHBOARDU...</h2></div>}>
+            <DashboardContent />
+        </Suspense>
     );
 }
