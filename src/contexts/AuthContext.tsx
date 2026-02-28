@@ -13,14 +13,14 @@ interface User {
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    checkSession: () => Promise<void>;
+    checkSession: () => Promise<boolean>;
     logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
-    checkSession: async () => { },
+    checkSession: async () => false,
     logout: async () => { },
 });
 
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const checkSession = async () => {
+    const checkSession = async (): Promise<boolean> => {
         try {
             setLoading(true);
             const res = await fetch('/api/auth/me', {
@@ -41,14 +41,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const data = await res.json();
                 if (data.authenticated && data.user) {
                     setUser(data.user);
+                    return true;
                 } else {
                     setUser(null);
+                    return false;
                 }
             } else {
                 setUser(null);
+                return false;
             }
         } catch (e) {
             setUser(null);
+            return false;
         } finally {
             setLoading(false);
         }

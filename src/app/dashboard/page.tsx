@@ -44,7 +44,10 @@ export default function DashboardPage() {
                 if (!loginRes.ok) throw new Error('Zarejestrowano, ale błąd logowania. Spróbuj się zalogować.');
             }
 
-            await checkSession();
+            const sessionValid = await checkSession();
+            if (!sessionValid) {
+                throw new Error("Pomyślnie uwierzytelniono, ale nie odczytano sesji. Odśwież stronę.");
+            }
         } catch (err: any) {
             setError(err.message);
         } finally {
