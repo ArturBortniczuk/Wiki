@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -42,8 +42,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function () { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function () { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -87,10 +87,10 @@ function fetchFighterData() {
                 case 0:
                     _a.trys.push([0, 8, , 9]);
                     return [4 /*yield*/, fetch('https://pl.wikipedia.org/w/api.php?action=query&list=random&rnlimit=1&rnnamespace=0&format=json&origin=*', {
-                            headers: {
-                                'User-Agent': 'WikiWarsBot/1.0 (Contact: WikiWars@local.dev)'
-                            }
-                        })];
+                        headers: {
+                            'User-Agent': 'WikiWarsBot/1.0 (Contact: WikiWars@local.dev)'
+                        }
+                    })];
                 case 1:
                     rnd = _a.sent();
                     return [4 /*yield*/, rnd.json()];
@@ -98,10 +98,10 @@ function fetchFighterData() {
                     rndD = _a.sent();
                     title_1 = rndD.query.random[0].title;
                     return [4 /*yield*/, fetch("https://pl.wikipedia.org/w/api.php?action=query&prop=info|images|revisions|links|langlinks|extlinks|categories&inprop=protection&pllimit=max&lllimit=max&ellimit=max&cllimit=max&titles=".concat(encodeURIComponent(title_1), "&format=json&origin=*"), {
-                            headers: {
-                                'User-Agent': 'WikiWarsBot/1.0 (Contact: WikiWars@local.dev)'
-                            }
-                        })];
+                        headers: {
+                            'User-Agent': 'WikiWarsBot/1.0 (Contact: WikiWars@local.dev)'
+                        }
+                    })];
                 case 3:
                     stat = _a.sent();
                     return [4 /*yield*/, stat.json()];
@@ -110,10 +110,10 @@ function fetchFighterData() {
                     page = Object.values(statD.query.pages)[0];
                     if (!(page.length && page.length > 5000 && page.images && page.images.length > 0)) return [3 /*break*/, 7];
                     return [4 /*yield*/, fetch("https://pl.wikipedia.org/api/rest_v1/page/summary/".concat(encodeURIComponent(title_1)), {
-                            headers: {
-                                'User-Agent': 'WikiWarsBot/1.0 (Contact: WikiWars@local.dev)'
-                            }
-                        })];
+                        headers: {
+                            'User-Agent': 'WikiWarsBot/1.0 (Contact: WikiWars@local.dev)'
+                        }
+                    })];
                 case 5:
                     imgReq = _a.sent();
                     return [4 /*yield*/, imgReq.json()];
@@ -207,10 +207,10 @@ function runSeeder() {
                 case 0:
                     console.log("Starting Wikipedia Fighter Seeder. Target: ".concat(TARGET_FIGHTERS, " valid articles."));
                     key = 'wiki:fighters';
-                    return [4 /*yield*/, redis_1.redis.del(key)];
+                // return [4 /*yield*/, redis_1.redis.del(key)];
                 case 1:
-                    _a.sent();
-                    console.log("Cleared existing '".concat(key, "' set in Redis."));
+                    // _a.sent();
+                    console.log("Appending new fighters to the '".concat(key, "' set in Redis."));
                     successCount = 0;
                     attemptCount = 0;
                     _a.label = 2;
@@ -232,9 +232,9 @@ function runSeeder() {
                         console.log("Progress: ".concat(successCount, " / ").concat(TARGET_FIGHTERS, " valid fighters saved. (Attempts so far: ").concat(attemptCount, ")"));
                     }
                     _a.label = 5;
-                case 5: 
-                // Wait before the next request to respect rate limits
-                return [4 /*yield*/, delay(API_DELAY_MS)];
+                case 5:
+                    // Wait before the next request to respect rate limits
+                    return [4 /*yield*/, delay(API_DELAY_MS)];
                 case 6:
                     // Wait before the next request to respect rate limits
                     _a.sent();

@@ -132,7 +132,7 @@ export default function Arena() {
                     WIKI-GLADIATORS 3.0
                 </h1>
                 <div className="arena-streak">
-                    <span className="text-muted">STREAK:</span> <span className="text-gold">{streak} 🔥</span>
+                    <span><span className="text-muted">STREAK:</span> <span className="text-gold">{streak}</span></span>
                 </div>
             </div>
 

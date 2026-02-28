@@ -142,10 +142,10 @@ async function fetchFighterData(): Promise<Fighter | null> {
 async function runSeeder() {
     console.log(`Starting Wikipedia Fighter Seeder. Target: ${TARGET_FIGHTERS} valid articles.`);
 
-    // Clear the existing set so we start fresh
+    // Use the existing set to append new fighters
     const key = 'wiki:fighters';
-    await redis.del(key);
-    console.log(`Cleared existing '${key}' set in Redis.`);
+    // await redis.del(key);
+    console.log(`Appending new fighters to the '${key}' set in Redis.`);
 
     let successCount = 0;
     let attemptCount = 0;

@@ -247,22 +247,37 @@ body {
 /* Arena Component */
 .arena-header-container {
   width: 100%;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 20px;
   max-width: 900px;
   margin: 0 auto 40px auto;
   padding: 15px 30px;
 }
 
-.arena-score,
-.arena-streak {
-  font-size: 1.4rem;
+.arena-score {
+  justify-self: start;
+  font-size: 1.2rem;
   font-weight: bold;
   font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.arena-streak {
+  justify-self: end;
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .arena-header-title {
+  justify-self: center;
   font-size: 1.8rem;
   font-weight: 900;
   letter-spacing: 3px;
@@ -271,6 +286,22 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .arena-header-container {
+    grid-template-columns: 1fr;
+    justify-content: center;
+    text-align: center;
+    gap: 15px;
+    padding: 15px;
+  }
+  .arena-score, .arena-streak, .arena-header-title {
+    justify-self: center;
+    justify-content: center;
+  }
 }
 
 .arena-grid {
