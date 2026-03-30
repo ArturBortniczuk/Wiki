@@ -252,13 +252,10 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
         <div style={{ width: '100%' }}>
 
             {/* Header / Scoreboard */}
-            <div className="arena-header-container glass-panel">
+            <div className="arena-stats-bar glass-panel">
                 <div className="arena-score">
                     <span className="text-muted">PUNKTY SKLEPU:</span> <span className="text-cyan">{myPoints}</span>
                 </div>
-                <h1 className="arena-header-title">
-                    WIKI-GLADIATORS ONLINE
-                </h1>
                 <div className="arena-streak">
                     <span><span className="text-muted">WYGRANE:</span> <span className="text-gold">{myScore}</span></span>
                     <span><span className="text-muted">SERIA:</span> <span className="text-red">{myStreak}</span></span>

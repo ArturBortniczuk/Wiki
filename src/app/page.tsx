@@ -80,6 +80,10 @@ export default function Home() {
 
       <div style={{ marginTop: '80px' }} />
 
+      <h1 className="landing-title">
+        WIKI-GLADIATORS
+      </h1>
+
       <p className="landing-subtitle">
         Najpotężniejsza arena w polskim internecie. Zmierz się z absolutnym chaosem generowanym z zasobów Wikipedii. Gdzie algorytmy określają Twoje przetrwanie.
       </p>

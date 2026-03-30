@@ -145,14 +145,11 @@ export default function Arena() {
         <div style={{ width: '100%' }}>
             <ProfileBadge />
 
-            {/* Header / Scoreboard */}
-            <div className="arena-header-container glass-panel">
+            {/* Stats Bar */}
+            <div className="arena-stats-bar glass-panel">
                 <div className="arena-score">
                     <span className="text-muted">SCORE:</span> <span className="text-cyan">{score}</span>
                 </div>
-                <h1 className="arena-header-title">
-                    WIKI-GLADIATORS 3.0
-                </h1>
                 <div className="arena-streak">
                     <span><span className="text-muted">STREAK:</span> <span className="text-gold">{streak}</span></span>
                 </div>
