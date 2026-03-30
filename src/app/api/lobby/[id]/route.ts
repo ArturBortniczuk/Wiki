@@ -150,6 +150,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             // No win condition here — game ends after all rounds (handled by next_round)
         }
 
+        if (updates.action === 'update_settings') {
+            if (updates.rounds !== undefined && parseInt(updates.rounds, 10) >= 1) {
+                state.settings.rounds = parseInt(updates.rounds, 10);
+            }
+            if (updates.timer !== undefined && parseInt(updates.timer, 10) >= 0) {
+                state.settings.timer = parseInt(updates.timer, 10);
+            }
+        }
+
         if (updates.action === 'reset_lobby') {
             state.status = 'waiting';
             state.fighters = null;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import MultiplayerArena from '@/components/MultiplayerArena';
@@ -25,6 +25,9 @@ function LobbyContent() {
     const [isHost, setIsHost] = useState(isHostParam);
     const [nickname, setNickname] = useState(initialNick);
     const [hasJoined, setHasJoined] = useState(isHostParam); // Host automatically joins
+    const [localRounds, setLocalRounds] = useState<number | null>(null);
+    const [localTimer, setLocalTimer] = useState<number | null>(null);
+    const hasAutoJoinedRef = useRef(false);
 
     // Game starting state 
     const [gameStarted, setGameStarted] = useState(false);
@@ -34,11 +37,28 @@ function LobbyContent() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [genProgress, setGenProgress] = useState(0);
 
+    // Auto-join when nick is pre-filled from the home page join form (?nick=...)
+    useEffect(() => {
+        if (!isHostParam && initialNick && !hasAutoJoinedRef.current) {
+            hasAutoJoinedRef.current = true;
+            fetch(`/api/lobby/${lobbyId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'join', playerNick: initialNick })
+            }).then(res => {
+                if (res.ok) {
+                    if (typeof window !== 'undefined') sessionStorage.setItem(`wiki_lobby_${lobbyId}`, initialNick);
+                    setHasJoined(true);
+                }
+            }).catch(console.error);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Retrieve user session if page refreshed
     useEffect(() => {
         if (!isHostParam && typeof window !== 'undefined') {
             if (user && user.username) {
-                // Official player login overrides local session
                 setNickname(user.username);
             } else {
                 const savedNick = sessionStorage.getItem(`wiki_lobby_${lobbyId}`);
@@ -60,6 +80,10 @@ function LobbyContent() {
                 if (res.ok) {
                     const data = await res.json();
                     setLobbyState(data);
+
+                    // Sync local settings from server only on first load
+                    if (localRounds === null) setLocalRounds(data.settings?.rounds ?? 3);
+                    if (localTimer === null) setLocalTimer(data.settings?.timer ?? 0);
 
                     if (data.status === 'starting' || data.status === 'round_active') {
                         setGameStarted(true);
@@ -224,14 +248,51 @@ function LobbyContent() {
                         )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '0.9rem' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
-                            <span className="text-muted">Rundy:</span> <span className="text-gold pull-right font-bold">{lobbyState?.settings?.rounds || initialRounds || '?'}</span>
+                    {isHost ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '0.9rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <label className="text-muted" style={{ fontSize: '0.8rem' }}>Liczba Rund</label>
+                                <input
+                                    type="number" min="1" max="15"
+                                    value={localRounds ?? ''}
+                                    onChange={e => {
+                                        const v = parseInt(e.target.value, 10);
+                                        setLocalRounds(v);
+                                        if (!isNaN(v) && v >= 1) {
+                                            fetch(`/api/lobby/${lobbyId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update_settings', rounds: v }) }).catch(console.error);
+                                        }
+                                    }}
+                                    className="premium-input"
+                                    style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 'bold', color: 'var(--gold)', fontSize: '1rem' }}
+                                />
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <label className="text-muted" style={{ fontSize: '0.8rem' }}>Timer (0 = brak)</label>
+                                <input
+                                    type="number" min="0" max="120" step="5"
+                                    value={localTimer ?? ''}
+                                    onChange={e => {
+                                        const v = parseInt(e.target.value, 10);
+                                        setLocalTimer(v);
+                                        if (!isNaN(v) && v >= 0) {
+                                            fetch(`/api/lobby/${lobbyId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update_settings', timer: v }) }).catch(console.error);
+                                        }
+                                    }}
+                                    className="premium-input"
+                                    style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 'bold', color: 'var(--gold)', fontSize: '1rem' }}
+                                />
+                            </div>
                         </div>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
-                            <span className="text-muted">Timer:</span> <span className="text-gold pull-right font-bold">{lobbyState?.settings?.timer ? lobbyState.settings.timer + 's' : (initialTimer !== '0' ? initialTimer + 's' : 'Brak')}</span>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '0.9rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
+                                <span className="text-muted">Rundy:</span> <span className="text-gold pull-right font-bold">{lobbyState?.settings?.rounds || '?'}</span>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
+                                <span className="text-muted">Timer:</span> <span className="text-gold pull-right font-bold">{lobbyState?.settings?.timer ? lobbyState.settings.timer + 's' : 'Brak'}</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
 
                     {/* Game Rules Info */}
@@ -239,12 +300,12 @@ function LobbyContent() {
                         <h4 className="text-gold font-bold" style={{ margin: '0 0 10px 0', letterSpacing: '1px', fontSize: '0.9rem' }}>📖 ZASADY GRY</h4>
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 8px 0', lineHeight: '1.5' }}>
                             Przez <strong style={{ color: 'white' }}>{lobbyState?.settings?.rounds || initialRounds} rund</strong> typujesz zwycięzcę walki.
-                            Wygrywa gracz z <strong style={{ color: 'var(--gold)' }}>największą liczbą 🪙 monet</strong> po ostatniej rundzie.
+                            Wygrywa gracz z <strong style={{ color: 'var(--gold)' }}>największą liczbą 💰 monet</strong> po ostatniej rundzie.
                         </p>
                         <ul style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, paddingLeft: '15px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            <li>✅ Trafne typowanie: <span style={{ color: 'var(--accent)' }}>+15🪙 + bonus za serię (+5 za każdą kolejną)</span></li>
-                            <li>❌ Błędne typowanie: <span style={{ color: 'var(--red)' }}>-20🪙, utrata serii</span></li>
-                            <li>⏳ Koniec czasu: <span style={{ color: 'var(--red)' }}>-20🪙 automatycznie</span></li>
+                            <li>✅ Trafne typowanie: <span style={{ color: 'var(--accent)' }}>+15💰 + bonus za serię (+5 za każdą kolejną)</span></li>
+                            <li>❌ Błędne typowanie: <span style={{ color: 'var(--red)' }}>-20💰, utrata serii</span></li>
+                            <li>⏳ Koniec czasu: <span style={{ color: 'var(--red)' }}>-20💰 automatycznie</span></li>
                             {lobbyState?.settings?.shop && <li>🛒 Sklep: <span style={{ color: 'var(--cyan)' }}>wydaj monety, aby podejrzeć statystyki gladiatora</span></li>}
                         </ul>
                     </div>
