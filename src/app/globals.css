@@ -855,7 +855,7 @@ body {
   width: 100%;
   padding: 15px 30px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 30px;
   align-items: center;
   z-index: 9999;
