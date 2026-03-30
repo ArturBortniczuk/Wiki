@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function ProfileBadge() {
+export default function ProfileBadge({ showLogo = true }: { showLogo?: boolean }) {
     const router = useRouter();
     const { user, logout, loading } = useAuth();
 
@@ -13,12 +13,14 @@ export default function ProfileBadge() {
     return (
         <div className="global-nav-bar">
             {/* Left Side Logo */}
-            <div
-                className="global-nav-logo"
-                onClick={() => router.push('/')}
-            >
-                WIKI-GLADIATORS
-            </div>
+            {showLogo && (
+                <div
+                    className="global-nav-logo"
+                    onClick={() => router.push('/')}
+                >
+                    WIKI-GLADIATORS
+                </div>
+            )}
 
             {/* Right Side User State */}
             {user ? (

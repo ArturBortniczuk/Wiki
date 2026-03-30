@@ -110,7 +110,7 @@ function LobbyContent() {
         if (isGenerating) return;
         try {
             setIsGenerating(true);
-            const totalRoundsToGenerate = Math.max(3, (lobbyState?.settings?.rounds || 3) * 2);
+            const totalRoundsToGenerate = lobbyState?.settings?.rounds || 3;
             const pool = [];
 
             for (let i = 0; i < totalRoundsToGenerate; i++) {
@@ -231,6 +231,22 @@ function LobbyContent() {
                         <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
                             <span className="text-muted">Timer:</span> <span className="text-gold pull-right font-bold">{lobbyState?.settings?.timer ? lobbyState.settings.timer + 's' : (initialTimer !== '0' ? initialTimer + 's' : 'Brak')}</span>
                         </div>
+                    </div>
+
+
+                    {/* Game Rules Info */}
+                    <div style={{ background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: '10px', padding: '16px' }}>
+                        <h4 className="text-gold font-bold" style={{ margin: '0 0 10px 0', letterSpacing: '1px', fontSize: '0.9rem' }}>📖 ZASADY GRY</h4>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 8px 0', lineHeight: '1.5' }}>
+                            Przez <strong style={{ color: 'white' }}>{lobbyState?.settings?.rounds || initialRounds} rund</strong> typujesz zwycięzcę walki.
+                            Wygrywa gracz z <strong style={{ color: 'var(--gold)' }}>największą liczbą 🪙 monet</strong> po ostatniej rundzie.
+                        </p>
+                        <ul style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, paddingLeft: '15px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <li>✅ Trafne typowanie: <span style={{ color: 'var(--accent)' }}>+15🪙 + bonus za serię (+5 za każdą kolejną)</span></li>
+                            <li>❌ Błędne typowanie: <span style={{ color: 'var(--red)' }}>-20🪙, utrata serii</span></li>
+                            <li>⏳ Koniec czasu: <span style={{ color: 'var(--red)' }}>-20🪙 automatycznie</span></li>
+                            {lobbyState?.settings?.shop && <li>🛒 Sklep: <span style={{ color: 'var(--cyan)' }}>wydaj monety, aby podejrzeć statystyki gladiatora</span></li>}
+                        </ul>
                     </div>
 
                     {isHost ? (

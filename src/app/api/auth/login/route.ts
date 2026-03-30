@@ -4,12 +4,10 @@ import { redis } from '@/lib/redis';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-
-const JWT_SECRET = process.env.wiki_JWT_SECRET;
-
+// NOTE: Set wiki_JWT_SECRET in Vercel env vars for production security.
+const JWT_SECRET = process.env.wiki_JWT_SECRET || 'super-secret-fallback-key-for-local-dev';
 
 export async function POST(req: Request) {
-    if (!JWT_SECRET) throw new Error('Missing wiki_JWT_SECRET in .env.local');
     try {
         const { username, password } = await req.json();
 

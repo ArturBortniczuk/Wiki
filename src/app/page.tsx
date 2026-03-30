@@ -76,7 +76,7 @@ export default function Home() {
       <div className="bg-decoration-2" />
 
       {/* Top Navigation / User Profile Banner */}
-      <ProfileBadge />
+      <ProfileBadge showLogo={false} />
 
       <div style={{ marginTop: '80px' }} />
 
@@ -174,7 +174,7 @@ export default function Home() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <label className="text-muted font-bold text-sm">Zwycięstw do Końca Gry</label>
+            <label className="text-muted font-bold text-sm">Liczba Rund do Rozegrania</label>
             <input
               type="number"
               min="1"

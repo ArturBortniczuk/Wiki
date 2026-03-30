@@ -200,16 +200,20 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
 
 
     if (lobbyState?.status === 'finished') {
-        const sorted = [...(lobbyState.players || [])].sort((a: any, b: any) => b.score - a.score);
+        const sorted = [...(lobbyState.players || [])].sort((a: any, b: any) => b.points - a.points);
         return (
             <div className="glass-panel" style={{ padding: '50px', width: '100%', maxWidth: '600px', margin: 'auto', textAlign: 'center', marginTop: '10vh' }}>
-                <h1 className="text-gold" style={{ fontSize: '3rem', margin: '0 0 20px', letterSpacing: '4px' }}>KONIEC GRY! 🏆</h1>
-                <h2 className="text-cyan mb-4">Zwycięzca: {sorted[0]?.nick}</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '30px', marginBottom: '30px' }}>
+                <h1 className="text-gold" style={{ fontSize: '3rem', margin: '0 0 10px', letterSpacing: '4px' }}>KONIEC GRY! 🏆</h1>
+                <p className="text-muted" style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Po {lobbyState.settings?.rounds} rundach...</p>
+                <h2 className="text-cyan" style={{ margin: '0 0 30px' }}>Zwycięzca: <span className="text-gold">{sorted[0]?.nick}</span> 🪙</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px' }}>
                     {sorted.map((p: any, idx) => (
-                        <div key={p.nick} style={{ background: 'rgba(255,255,255,0.05)', padding: '15px 20px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div key={p.nick} style={{ background: idx === 0 ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.05)', padding: '15px 20px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: idx === 0 ? '1px solid rgba(255,215,0,0.3)' : '1px solid transparent' }}>
                             <span className="font-bold" style={{ fontSize: '1.2rem' }}>#{idx + 1} {p.nick}</span>
-                            <span><span className="text-gold font-bold">{p.score}</span> Rundy (Kasa: {p.points || 0})</span>
+                            <div style={{ textAlign: 'right' }}>
+                                <div><span className="text-gold font-bold" style={{ fontSize: '1.3rem' }}>🪙 {p.points || 0}</span> <span className="text-muted" style={{ fontSize: '0.85rem' }}>monet</span></div>
+                                <div className="text-muted" style={{ fontSize: '0.8rem' }}>{p.score || 0} wygranych rund</div>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -254,10 +258,14 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
             {/* Header / Scoreboard */}
             <div className="arena-stats-bar glass-panel">
                 <div className="arena-score">
-                    <span className="text-muted">PUNKTY SKLEPU:</span> <span className="text-cyan">{myPoints}</span>
+                    <span className="text-muted">MONETY:</span> <span className="text-gold">🪙 {myPoints}</span>
+                </div>
+                <div style={{ textAlign: 'center', fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                    <span className="text-muted">RUNDA </span>
+                    <span className="text-cyan">{lobbyState?.currentRound || 1}</span>
+                    <span className="text-muted"> / {lobbyState?.settings?.rounds || '?'}</span>
                 </div>
                 <div className="arena-streak">
-                    <span><span className="text-muted">WYGRANE:</span> <span className="text-gold">{myScore}</span></span>
                     <span><span className="text-muted">SERIA:</span> <span className="text-red">{myStreak}</span></span>
                 </div>
             </div>
@@ -331,8 +339,8 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                                             <span className="text-muted" style={{ fontSize: '0.8rem' }}>Kariera: {p.globalWins || 0}W / {p.globalLosses || 0}L</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                            <span>Rundy: <span className="text-cyan">{p.score || 0}</span></span>
-                                            <span>Punkty: <span className="text-cyan">{p.points || 0}</span></span>
+                                            <span>Wygrane: <span className="text-cyan">{p.score || 0}</span></span>
+                                            <span>🪙 <span className="text-gold font-bold">{p.points || 0}</span></span>
                                         </div>
                                         <div style={{ marginTop: '4px', textAlign: 'center', fontWeight: 'bold' }}>
                                             {p.bet !== null ? (

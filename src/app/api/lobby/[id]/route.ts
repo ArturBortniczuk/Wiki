@@ -106,7 +106,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         if (updates.action === 'next_round') {
             state.currentRound += 1;
 
-            if (state.fighterPool && state.fighterPool.length > 0) {
+            // Game ends after all rounds are played — winner is player with most coins (points)
+            if (state.currentRound > state.settings.rounds) {
+                state.status = 'finished';
+                state.fighters = null;
+                state.roundEndTime = null;
+            } else if (state.fighterPool && state.fighterPool.length > 0) {
                 const nextMatch = state.fighterPool.shift();
                 state.fighters = nextMatch;
                 state.status = 'round_active';
@@ -142,11 +147,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 }
             });
 
-            // Check if someone won
-            const winner = state.players.find((p: any) => p.score >= state.settings.rounds);
-            if (winner) {
-                state.status = 'finished';
-            }
+            // No win condition here — game ends after all rounds (handled by next_round)
         }
 
         if (updates.action === 'reset_lobby') {

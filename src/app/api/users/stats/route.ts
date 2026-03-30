@@ -3,12 +3,9 @@ import { cookies } from 'next/headers';
 import { redis } from '@/lib/redis';
 import jwt from 'jsonwebtoken';
 
-
-const JWT_SECRET = process.env.wiki_JWT_SECRET;
-
+const JWT_SECRET = process.env.wiki_JWT_SECRET || 'super-secret-fallback-key-for-local-dev';
 
 export async function POST(req: Request) {
-    if (!JWT_SECRET) throw new Error('Missing wiki_JWT_SECRET in .env.local');
     try {
         const cookieStore = await cookies();
         const token = cookieStore.get('auth_token')?.value;
