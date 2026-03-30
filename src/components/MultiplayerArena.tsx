@@ -221,7 +221,7 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ action: 'reset_lobby' })
-                            });
+                            }).catch(console.error);
                         }}
                     >
                         WRÓĆ DO POKOJU I ZAGRAJ PONOWNIE 🔄
@@ -368,7 +368,11 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
                                 </div>
                                 {isHost ? (
                                     <button
-                                        onClick={() => fetch(`/api/lobby/${lobbyId}`, { method: 'PATCH', body: JSON.stringify({ action: 'next_round' }) })}
+                                        onClick={() => fetch(`/api/lobby/${lobbyId}`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ action: 'next_round' })
+                                    }).catch(console.error)}
                                         className="premium-btn"
                                         disabled={lobbyState?.status === 'starting'}
                                         style={{ width: '100%', maxWidth: '300px' }}

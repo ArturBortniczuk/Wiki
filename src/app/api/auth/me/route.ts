@@ -3,9 +3,12 @@ import { cookies } from 'next/headers';
 import { redis } from '@/lib/redis';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.wiki_JWT_SECRET || 'super-secret-fallback-key-for-local-dev';
+
+const JWT_SECRET = process.env.wiki_JWT_SECRET;
+
 
 export async function GET(req: Request) {
+    if (!JWT_SECRET) throw new Error('Missing wiki_JWT_SECRET in .env.local');
     try {
         const cookieStore = await cookies();
         const token = cookieStore.get('auth_token')?.value;
@@ -17,7 +20,7 @@ export async function GET(req: Request) {
         try {
             const decoded = jwt.verify(token, JWT_SECRET) as { username: string };
 
-            const userKey = `user:${decoded.username}`;
+            const userKey = `user:${decoded.username.toLowerCase()}`;
             const user = await redis.hgetall(userKey);
 
             if (!user || Object.keys(user).length === 0) {

@@ -6,8 +6,10 @@ import { BattleState, executeTurn } from '@/services/battleEngine';
 import FighterCard from './FighterCard';
 import BattleLog from './BattleLog';
 import ProfileBadge from './ProfileBadge';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Arena() {
+    const { user } = useAuth();
     const [fighters, setFighters] = useState<Fighter[] | null>(null);
     const [nextFighters, setNextFighters] = useState<Fighter[] | null>(null);
 
@@ -19,6 +21,13 @@ export default function Arena() {
     const [userChoice, setUserChoice] = useState<number | null>(null);
 
     const battleIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Cleanup interval on unmount to avoid memory / state leaks
+    useEffect(() => {
+        return () => {
+            if (battleIntervalRef.current) clearInterval(battleIntervalRef.current);
+        };
+    }, []);
 
     const loadFighters = async (isPrefetch = false) => {
         if (isPrefetch) {
@@ -76,11 +85,13 @@ export default function Arena() {
                 const winner = currentState.winnerIdx;
 
                 // Report my own stats to the global user leaderboard if logged in
-                fetch('/api/users/stats', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ result: (winner === choiceIdx) ? 'win' : 'loss' })
-                }).catch(console.error); // Silent catch if not logged in
+                if (user) {
+                    fetch('/api/users/stats', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ result: (winner === choiceIdx) ? 'win' : 'loss' })
+                    }).catch(console.error);
+                }
 
                 if (winner === choiceIdx) {
                     setStreak(s => {

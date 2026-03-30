@@ -1,5 +1,5 @@
 {
-  "name": "temp-next",
+  "name": "wiki-gladiators",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@vercel/kv": "^3.0.0",
     "bcryptjs": "^3.0.3",
     "ioredis": "^5.9.3",
     "jsonwebtoken": "^9.0.3",

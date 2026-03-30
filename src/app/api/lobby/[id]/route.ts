@@ -83,6 +83,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             // If all players bet, we can move the state to fighting/resolving
             const allBet = state.players.every((p: any) => p.bet !== null);
             if (allBet && state.players.length > 0 && state.status !== 'round_finished') {
+                if (!state.fighters || state.fighters.length < 2) {
+                    // Fighters not yet loaded — don't simulate, return early
+                    return NextResponse.json({ error: 'Fighters not ready yet' }, { status: 409 });
+                }
                 state.status = 'round_finished';
                 state.battleResult = simulateBattle(state.fighters);
             }
