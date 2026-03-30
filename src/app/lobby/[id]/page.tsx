@@ -22,9 +22,13 @@ function LobbyContent() {
     const initialTimer = searchParams.get('t');
     const initialShop = searchParams.get('s');
 
+    // fromHomePage=true when nick was pre-filled from the home page join form
+    const fromHomePage = !isHostParam && !!initialNick;
+
     const [isHost, setIsHost] = useState(isHostParam);
     const [nickname, setNickname] = useState(initialNick);
-    const [hasJoined, setHasJoined] = useState(isHostParam); // Host automatically joins
+    // Start joined if host OR coming from home page — join API call fires in background
+    const [hasJoined, setHasJoined] = useState(isHostParam || fromHomePage);
     const [localRounds, setLocalRounds] = useState<number | null>(null);
     const [localTimer, setLocalTimer] = useState<number | null>(null);
     const hasAutoJoinedRef = useRef(false);
@@ -39,27 +43,32 @@ function LobbyContent() {
 
     // Auto-join when nick is pre-filled from the home page join form (?nick=...)
     useEffect(() => {
-        if (!isHostParam && initialNick && !hasAutoJoinedRef.current) {
+        if (fromHomePage && !hasAutoJoinedRef.current) {
             hasAutoJoinedRef.current = true;
+            const nickToUse = (user?.username) || initialNick;
             fetch(`/api/lobby/${lobbyId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'join', playerNick: initialNick })
+                body: JSON.stringify({ action: 'join', playerNick: nickToUse })
             }).then(res => {
                 if (res.ok) {
-                    if (typeof window !== 'undefined') sessionStorage.setItem(`wiki_lobby_${lobbyId}`, initialNick);
-                    setHasJoined(true);
+                    if (typeof window !== 'undefined') sessionStorage.setItem(`wiki_lobby_${lobbyId}`, nickToUse);
+                    setNickname(nickToUse);
+                } else {
+                    // Lobby not found or error — go home
+                    router.push('/');
                 }
-            }).catch(console.error);
+            }).catch(() => router.push('/'));
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [user]); // re-run when auth resolves in case user was null on first render
 
-    // Retrieve user session if page refreshed
+    // Retrieve user session on page refresh (when no ?nick= in URL)
     useEffect(() => {
-        if (!isHostParam && typeof window !== 'undefined') {
+        if (!isHostParam && !fromHomePage && typeof window !== 'undefined') {
             if (user && user.username) {
                 setNickname(user.username);
+                setHasJoined(true); // logged-in user doesn't need to re-enter nick
             } else {
                 const savedNick = sessionStorage.getItem(`wiki_lobby_${lobbyId}`);
                 if (savedNick) {
@@ -68,7 +77,7 @@ function LobbyContent() {
                 }
             }
         }
-    }, [isHostParam, lobbyId, user]);
+    }, [isHostParam, fromHomePage, lobbyId, user]);
 
     // Poll the redis lobby state
     useEffect(() => {

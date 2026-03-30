@@ -5,8 +5,10 @@ import { fetchFighter, Fighter } from '@/services/wikipediaService';
 import { BattleState, executeTurn } from '@/services/battleEngine';
 import FighterCard from './FighterCard';
 import BattleLog from './BattleLog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyId: string, nickname: string, isHost: boolean }) {
+    const { user } = useAuth();
     const [lobbyState, setLobbyState] = useState<any>(null);
     const [fighters, setFighters] = useState<Fighter[] | null>(null);
     const [battleState, setBattleState] = useState<BattleState | null>(null);
@@ -22,6 +24,22 @@ export default function MultiplayerArena({ lobbyId, nickname, isHost }: { lobbyI
     const myStreak = myPlayer.streak || 0;
 
     const battleIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const hasReportedStatsRef = useRef(false);
+
+    // Report multiplayer result to global stats once per game
+    useEffect(() => {
+        if (lobbyState?.status === 'finished' && user && !hasReportedStatsRef.current) {
+            hasReportedStatsRef.current = true;
+            const sorted = [...(lobbyState.players || [])].sort((a: any, b: any) => b.points - a.points);
+            const myRank = sorted.findIndex((p: any) => p.nick === nickname);
+            const result = myRank === 0 ? 'win' : 'loss';
+            fetch('/api/users/stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ result })
+            }).catch(console.error);
+        }
+    }, [lobbyState?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Poll lobby state
     useEffect(() => {
